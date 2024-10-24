@@ -1,6 +1,16 @@
-class Complex:
+class Number:
+    int x, y;
+    ;
 
-    int real,img;
-    int i, h;
+    def __init__(self): Number
+
+    ;
+
+
+class Complex:
+    int x, y;
+    ;
+
+    def __init__(self, int x, Number y): Complex
 
     ;
