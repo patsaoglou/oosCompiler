@@ -1,67 +1,6 @@
 from oosListener import oosListener
 from oosParser import oosParser
-
-class class_method:
-
-    def __init__(self, name, is_constructor=False, type_list=None, id_list=None):
-        self.name = name
-        self.is_constructor = is_constructor
-        self.type_list = type_list if type_list is not None else []
-        self.id_list = id_list if id_list is not None else []
-        self.fields = {} 
-
-    def set_as_constructor(self):
-        self.is_constructor = True
-
-    def add_param(self, type_, id_):
-        self.type_list.append(type_)
-        self.id_list.append(id_)
-        self.fields[id_] = type_
-
-    def add_field(self, field_name, field_type):
-        self.fields[field_name] = field_type
-
-    def has_field(self, field_name, expected_type=None):
-        if field_name not in self.fields:
-            return False
-        if expected_type is not None:
-            return self.fields[field_name] == expected_type
-        return True
-
-    def __str__(self):
-        inheritance_str = ', '.join([parent.name for parent in self.inherit_from])
-        methods_str = '\n  '.join([str(method) for method in self.methods])
-        fields_str = ', '.join([f"{name}: {type_}" for name, type_ in self.fields.items()])
-        
-        return f"Class name: {self.name}\nInherits from: [{inheritance_str}]\nFields: [{fields_str}]\nMethods:\n  {methods_str}"
-
-
-class class_info:
-
-    def __init__(self, name):
-        self.name = name
-        self.inherit_from = [] # class_info list
-        self.methods = []      # class_method list
-    
-    def add_inheritance(self, parent_class):    
-        if isinstance(parent_class, class_info):
-            self.inherit_from.append(parent_class)
-        else:
-            print("add_inheritance adding something that is not instance. Exit")
-            exit(0)
-
-    def add_method(self, method):
-        if isinstance(method, class_method):
-            self.methods.append(method)
-        else:
-            print("add_method adding something that is not instance. Exit")
-            exit(0)
-
-    def __str__(self):
-        inheritance_str = ', '.join([parent.name for parent in self.inherit_from])
-        methods_str = '\n  '.join([str(method) for method in self.methods])
-        
-        return f"Class name: {self.name}\nInherits from: [{inheritance_str}]\nMethods:\n  {methods_str}"
+from symbolTable import *
 
 class oosListenerImplementation(oosListener):
 
@@ -79,9 +18,30 @@ class oosListenerImplementation(oosListener):
         self.parlist = []
         self.actual_pars = []
     
-    def add_class(self, class_info_obj):
-        if isinstance(class_info_obj, class_info):
-            self.class_entries[class_info_obj.name] = class_info_obj
+    def add_class(self, class_name):
+        new = class_info(class_name)
+        if isinstance(new, class_info):
+            self.class_entries[new.name] = new
+    
+    def add_field_to_class(self, class_name, field_name, field_type):
+        class_obj = self.class_entries.get(class_name)
+        if (class_obj):
+            class_obj.add_field(field_name, field_type)
+            print(class_obj)
+        else:
+            print("adding field to class that does not exist.")
+            exit(0)
+
+    def get_class_obj(self, class_name):
+        return self.class_entries.get(class_name)
+
+    def has_class_field_with_value(self, class_name, field_name, field_type):
+        class_obj = self.get_class_obj(class_name)
+        if (class_obj):
+            if class_obj.get_field_type(field_name) == field_type:
+                return True
+            else:
+                return False
 
     def get_oos_compiled(self):
         return "".join(self.output)
@@ -103,8 +63,8 @@ class oosListenerImplementation(oosListener):
         self.output.append(f"\ntypedef struct {self.last_class_struct} {{")
         self.known_classes.append(f"{self.last_class_struct}")
         self.output.append("\n")
-      
 
+        self.add_class(class_name)
 
     def exitClass_def(self, ctx:oosParser.Class_defContext):
         pass
@@ -190,12 +150,17 @@ class oosListenerImplementation(oosListener):
         for idx in range(len(self.types_list)):
             
             if self.types_list[idx] != "int":
+                self.add_field_to_class(self.known_classes[-1], self.parlist[idx], self.types_list[idx])
                 self.output.append(f", {self.types_list[idx]} *{self.parlist[idx]}")
             else:
+                self.add_field_to_class(self.known_classes[-1], self.parlist[idx], self.types_list[idx])
                 self.output.append(f", {self.types_list[idx]} {self.parlist[idx]}")
           
         self.parlist = []
         self.types_list = []
 
         self.output.append(f")\n{{\n\t")
-         
+
+        # defining dynamic memory allocation for new object
+        print(self.get_class_obj("Number"))
+        self.output.append(f"")
