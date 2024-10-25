@@ -1,16 +1,41 @@
 class Number:
-    int x, y;
-    ;
 
-    def __init__(self): Number
-
+    int real,img;
     ;
 
 
 class Complex:
-    int x, y;
+    Number num;
+    int real,img;
     ;
 
-    def __init__(self, int x, Number y): Complex
 
+
+
+    def __init__(self, int real, int img): Complex
+        int real;
+        self.real=real;
+        self.img=img;
+        return self;
+        ;
+
+
+class Main:
+
+    Complex c1,c2,c3;
     ;
+
+
+    def main(self): -
+
+        c1 = Complex(1,2);
+        c2 = Complex(3,4);
+        c3 = Complex();
+        c1.print_complex();
+        c2.print_complex();
+        c3.add(c1,c2);
+        c3.print_complex();
+        c3.set_real(c1.squared_modulus());
+        c3.set_img(c2.squared_modulus());
+        c3.print_complex();
+        ;
