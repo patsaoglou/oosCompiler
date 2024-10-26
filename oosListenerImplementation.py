@@ -60,13 +60,16 @@ class oosListenerImplementation(oosListener):
         
         return class_obj
 
-    def has_class_field_with_value(self, class_name, field_name, field_type):
+    def has_class_field(self, class_name, field_name):
         class_obj = self.get_class_obj(class_name)
         if (class_obj):
-            if class_obj.get_field_type(field_name) == field_type:
+            if (class_obj.has_field(field_name)):
                 return True
             else:
-                return False
+                print(f"Class '{class_name}' does not have field '{field_name}' declared")
+                exit(0)
+        
+         
             
     def check_if_overide_methods_valid(self, class_name, method_object):
         class_obj = self.get_class_obj(class_name)
@@ -215,7 +218,8 @@ class oosListenerImplementation(oosListener):
     def enterMethod_def(self, ctx:oosParser.Method_defContext):
         method_name = ctx.ID().getText()
         self.last_method_def = method_name
-        text, ret = ctx.getText().split(':')
+        print(ctx.getText())
+        text, ret = ctx.getText().split(':', 1)
         return_type = ""
         
         # Check for the return type
@@ -254,4 +258,60 @@ class oosListenerImplementation(oosListener):
         self.output.append(f"\n\n\treturn 0;\n}}")
         print(self.get_class_obj("Complex"))
 
-       
+    # --------------------------------------------    
+
+    def enterStatement(self, ctx:oosParser.StatementContext):
+        pass
+
+    # Exit a parse tree produced by oosParser#statement.
+    def exitStatement(self, ctx:oosParser.StatementContext):
+        self.output.append(f";\n")
+
+    # --------------------------------------------    
+
+    def enterReturn_stat(self, ctx:oosParser.Return_statContext):
+         self.output.append(f"\treturn ")
+
+    def exitReturn_stat(self, ctx:oosParser.Return_statContext):
+        pass
+        # here i should check if the returns made are type of return type of the method and raise error
+
+    # --------------------------------------------    
+
+    def enterAssignment_stat(self, ctx:oosParser.Assignment_statContext):
+        if "self." in ctx.getText():
+            class_self, assign = ctx.getText().split('.')
+            field, val = assign.split('=')
+            print(self.known_classes[-1])
+
+            if (self.has_class_field(self.known_classes[-1], field)):
+                self.output.append(f"\tself$ -> {field} = ")
+        
+    def exitAssignment_stat(self, ctx:oosParser.Assignment_statContext):
+        pass
+
+     # --------------------------------------------    
+    
+    def enterFactor(self, ctx:oosParser.FactorContext):
+        if ctx.INTEGER():
+            self.output.append(f"{ctx.getText()}")
+
+    def exitFactor(self, ctx:oosParser.FactorContext):
+        pass
+
+
+    # -----------------Terminating Characters------------------    
+
+    def enterRel_oper(self, ctx:oosParser.Rel_operContext):
+        self.output.append(f" {ctx.getText()} ")
+
+    # --------------------------------------------    
+
+    def enterAdd_oper(self, ctx:oosParser.Add_operContext):
+        self.output.append(f" {ctx.getText()} ")
+
+    # --------------------------------------------    
+
+    def enterMul_oper(self, ctx:oosParser.Mul_operContext):
+         self.output.append(f" {ctx.getText()} ")
+

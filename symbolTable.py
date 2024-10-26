@@ -6,7 +6,7 @@ class class_method:
         self.is_constructor = is_constructor
         self.fields = {} 
         self.params = {}
-        self.param_number = 0
+        self.param_number = 1
         self.return_type = None
 
     def set_next_version(self, next):
@@ -49,6 +49,10 @@ class class_method:
     def get_name(self):
         return self.name
     
+    def get_param_number(self):
+        return self.param_number
+
+
     def __str__(self):
         # inheritance_str = ', '.join([parent.name for parent in self.inherit_from])
         params = ', '.join([f"{name}: {type_}" for name, type_ in self.fields.items()])
@@ -74,7 +78,7 @@ class class_info:
     
     def add_method(self, method_name, is_constructor = False, return_type = "void"):
         new_method = class_method(None)
-        
+        new_method.add_field("self",self.name, True)
         if is_constructor:
             self.constructor_number +=1
             new_method.set_return_type(self.name)
@@ -106,13 +110,12 @@ class class_info:
             exit(0)
         self.fields[field_name] = field_type
     
-    def get_field_type(self, field_name):
+    def has_field(self, field_name):
         field_type = self.fields.get(field_name)
         if (field_type):
-            return field_type
+            return True
         else:
-            print("get_field_type field does not exist. Exit")
-            exit(0)
+            return False
 
     def check_if_overide_methods_valid(self, method_object):
         method_name = method_object.get_name()
@@ -121,7 +124,7 @@ class class_info:
         for method in overrided_methods:
             if method == method_object:
                 continue
-            if len(method.get_params()) == len(method_object.get_params()):
+            if method.get_param_number == method_object.get_param_number():
                 method_types = list(method.get_params().values())
                 for type in range(len(method_types)):
                     if method_types[type] != method_object_types[type]:
