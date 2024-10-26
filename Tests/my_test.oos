@@ -4,26 +4,26 @@ class Complex:
     ;
 
 
-    def __init__(self, int x): Complex
-        Complex comp;
-
-        ;
-
+    def __init__(self): Complex
         self.real=0;
         self.img=0;
         return self;
         ;
 
-    
+    def __init__(self): Complex
+        self.real=real;
+        self.img=img;
+        return self;
+        ;
 
+    def get_complex(self): Complex
+        int x;
+        Complex comp;
+        ;
+        ;
+    
 
 class Main:
 
-    Complex c1,c2;
-    Complex c3;
+    Complex c1,c2,c3;
     ;
-
-
-    def main(self): -
-
-        ;

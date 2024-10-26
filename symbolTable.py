@@ -1,11 +1,15 @@
 class class_method:
 
-    def __init__(self, name, is_constructor=False, type_list=None, id_list=None):
+    def __init__(self, name, is_constructor = False, return_type = "void"):
         self.name = name
         self.is_constructor = is_constructor
         self.fields = {} 
         self.params = {}
         self.param_number = 0
+        self.return_type = None
+
+    def set_return_type(self, return_type):
+        self.return_type = return_type
 
     def set_as_constructor(self):
         self.is_constructor = True
@@ -36,7 +40,7 @@ class class_method:
         # inheritance_str = ', '.join([parent.name for parent in self.inherit_from])
         params = ', '.join([f"{name}: {type_}" for name, type_ in self.fields.items()])
         
-        return f"\n\tMethod name: {self.name}\n\tFields: [{params}]\n\tParameter num: {str(self.param_number)}\n\tConstructor: {str(self.is_constructor)}"
+        return f"\n\tMethod name: {self.name}\n\tFields: [{params}]\n\tParameter num: {str(self.param_number)}\n\tReturns: {str(self.return_type)}\n\tConstructor: {str(self.is_constructor)}"
 
 
 class class_info:
@@ -55,32 +59,37 @@ class class_info:
             print("add_inheritance adding something that is not instance. Exit")
             exit(0)
     
-    def add_method(self, method_name, is_constructor = False):
+    def add_method(self, method_name, is_constructor = False, return_type = "void"):
         new_method = class_method(None)
         
         if is_constructor:
             self.constructor_number +=1
             method_name = method_name + str(self.constructor_number)
+            new_method.set_return_type(self.name)
             new_method.set_name(method_name)
             new_method.is_constructor = True
+        else:
+            new_method.set_name(method_name)
+            new_method.set_return_type(return_type)
         
         for i in self.methods:
             if i.name == method_name:
                 print(f"Method with name '{method_name}' is already declared in class '{self.name}'")
                 exit(0)
 
+        
         self.methods.append(new_method)
         return method_name
     
     def add_field_to_method(self, method_name, field_name, field_type, is_param = False):
         for method in self.methods:
             if method.name == method_name:
-                if field_name in self.fields:
+                if field_name in method.fields:
                     print(f"Field '{field_name}' is already declared in scope of '{method.name}' method")
                     exit(0)
                 method.add_field(field_name, field_type, is_param)
                 return
-        print(f"Method with name '{method_name}' does not exist to add params")
+        print(f"Method with name '{method_name}' does not exist to add params {field_name, field_type}")
         exit(0)
     
     def add_field(self, field_name, field_type):

@@ -1,6 +1,7 @@
 from oosListener import oosListener
 from oosParser import oosParser
 from symbolTable import *
+import copy
 
 class oosListenerImplementation(oosListener):
 
@@ -11,6 +12,7 @@ class oosListenerImplementation(oosListener):
         self.known_classes = []
         self.last_class_struct = None
         self.last_method_def = None
+        self.in_constructor = False
 
         self.id_list = []
         self.types_list = []
@@ -34,20 +36,27 @@ class oosListenerImplementation(oosListener):
 
     def add_field_to_class_method(self, class_name, method_name, field_name, field_type, is_param = False):
         class_obj = self.class_entries.get(class_name)
+        
         if (class_obj):
             class_obj.add_field_to_method(method_name, field_name, field_type, is_param)
         else:
             print("add_field_to_class_method to class that does not exist.")
             exit(0)
 
-    def add_method_to_class(self, class_name, method_name, is_constructor = False):
+    def add_method_to_class(self, class_name, method_name, is_constructor = False, return_type =None):
 
         class_obj = self.class_entries.get(class_name)
-        
-        return class_obj.add_method(method_name, is_constructor)
+
+        return class_obj.add_method(method_name, is_constructor, return_type)
 
     def get_class_obj(self, class_name):
-        return self.class_entries.get(class_name)
+        class_obj = self.class_entries.get(class_name)
+        
+        if class_obj is None:
+            print(f"Class with class name '{class_name}' is not defined")
+            exit(0)
+        
+        return class_obj
 
     def has_class_field_with_value(self, class_name, field_name, field_type):
         class_obj = self.get_class_obj(class_name)
@@ -114,7 +123,7 @@ class oosListenerImplementation(oosListener):
         
         if decl_type != "int":
             for id in self.id_list:
-                if self.last_method_def is None:
+                if self.last_method_def is None or self.known_classes[-1] == "main":
                     self.add_field_to_class(self.last_class_struct, id, decl_type)
                 else:
                     self.add_field_to_class_method(self.last_class_struct, self.last_method_def, id, decl_type)
@@ -124,7 +133,7 @@ class oosListenerImplementation(oosListener):
         else:
             for id in self.id_list:
                
-                if self.last_method_def is None:
+                if self.last_method_def is None or self.known_classes[-1] == "main":
                     self.add_field_to_class(self.last_class_struct, id, decl_type)
                     
                 else:
@@ -134,8 +143,6 @@ class oosListenerImplementation(oosListener):
         self.output.append(";\n")
 
         self.id_list = []
-
-        
 
     # --------------------------------------------
    
@@ -162,10 +169,13 @@ class oosListenerImplementation(oosListener):
             
             self.last_method_def = method_name
             self.output.append(f"\n{constructor_class_name}* init${method_name}({constructor_class_name} *self$")
+
+        self.in_constructor = True
             
     def exitConstructor_def(self, ctx:oosParser.Constructor_defContext):
         self.last_method_def = None
         self.output.append(f"\n}}\n")
+        self.in_constructor = False
 
    
     def enterParlist(self, ctx:oosParser.ParlistContext):
@@ -177,7 +187,6 @@ class oosListenerImplementation(oosListener):
     def exitParlist(self, ctx:oosParser.ParlistContext):
 
         for idx in range(len(self.types_list)):
-            
             if self.types_list[idx] != "int":   
                 self.add_field_to_class_method(self.known_classes[-1], self.last_method_def, self.parlist[idx], self.types_list[idx], True)
                 self.output.append(f", {self.types_list[idx]} *{self.parlist[idx]}")
@@ -188,27 +197,53 @@ class oosListenerImplementation(oosListener):
         self.parlist = []
         self.types_list = []
 
-        self.output.append(f")\n{{\n\t")
+        self.output.append(f")\n{{\n")
         
-        # print(self.get_class_obj("Complex"))
-
-        # defining dynamic memory allocation for new object
-        self.output.append(f"")
-        self.output.append(f"if(self$ == NULL)\n\t{{\t\n\t\tself$ = ({self.last_class_struct} *)malloc(sizeof({self.last_class_struct}));\n\t}}\n\n")
+        # defining dynamic memory allocation for new object if in constructor. used this because it is generating malloc even on norma functions
+        if self.in_constructor:
+            self.output.append(f"\tif(self$ == NULL)\n\t{{\t\n\t\tself$ = ({self.last_class_struct} *)malloc(sizeof({self.last_class_struct}));\n\t}}\n\n")
 
     # --------------------------------------------
-    
+
+    def enterMethod_def(self, ctx:oosParser.Method_defContext):
+        method_name = ctx.ID().getText()
+        self.last_method_def = method_name
+        text, ret = ctx.getText().split(':')
+        return_type = ""
+        
+        # Check for the return type
+        if "int" in ret:
+            return_type = "int"
+        elif "-" in ret:
+            return_type = "void"
+        elif ctx.class_name() is not None:
+            class_name = ctx.class_name().getText()
+            self.get_class_obj(class_name) # check if class is defined
+            return_type = class_name
+
+        self.add_method_to_class(self.known_classes[-1], method_name, False, return_type)
+        if "int" not in return_type and "void" not in return_type:
+            return_type = return_type +"*"
+
+        self.output.append(f"\n{return_type} {method_name}({self.known_classes[-1]} *self$")
+
+        self.last_method_def = method_name
+
+    def exitMethod_def(self, ctx:oosParser.Method_defContext):
+        self.output.append(f"\n}}\n")
+
+    # --------------------------------------------    
 
     def enterClass_main_def(self, ctx:oosParser.Method_main_defContext):
         self.last_class_struct = "main"
+        self.known_classes.append("main")
         self.add_class("main")
 
         self.output.append(f"\nint main(void)\n{{\n")
         
 
-    # Exit a parse tree produced by oosParser#method_main_def.
     def exitClass_main_def(self, ctx:oosParser.Method_main_defContext):
-        print(self.get_class_obj("main"))
         self.output.append(f"\n\n\treturn 0;\n}}")
+        print(self.get_class_obj("Complex"))
 
        
