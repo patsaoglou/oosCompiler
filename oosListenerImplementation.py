@@ -12,6 +12,7 @@ class oosListenerImplementation(oosListener):
         self.known_classes = []
         self.last_class_struct = None
         self.last_method_def = None
+        self.last_method_obj = None
         self.in_constructor = False
 
         self.id_list = []
@@ -34,11 +35,11 @@ class oosListenerImplementation(oosListener):
             print("adding field to class that does not exist.")
             exit(0)
 
-    def add_field_to_class_method(self, class_name, method_name, field_name, field_type, is_param = False):
+    def add_field_to_class_method(self, class_name, method_obf, field_name, field_type, is_param = False):
         class_obj = self.class_entries.get(class_name)
         
         if (class_obj):
-            class_obj.add_field_to_method(method_name, field_name, field_type, is_param)
+            class_obj.add_field_to_method(method_obf, field_name, field_type, is_param)
         else:
             print("add_field_to_class_method to class that does not exist.")
             exit(0)
@@ -46,8 +47,9 @@ class oosListenerImplementation(oosListener):
     def add_method_to_class(self, class_name, method_name, is_constructor = False, return_type =None):
 
         class_obj = self.class_entries.get(class_name)
-
-        return class_obj.add_method(method_name, is_constructor, return_type)
+        method = class_obj.add_method(method_name, is_constructor, return_type)
+        self.last_method_obj = method[1]
+        return method[0]
 
     def get_class_obj(self, class_name):
         class_obj = self.class_entries.get(class_name)
@@ -65,6 +67,10 @@ class oosListenerImplementation(oosListener):
                 return True
             else:
                 return False
+            
+    def check_if_overide_methods_valid(self, class_name, method_object):
+        class_obj = self.get_class_obj(class_name)
+        class_obj.check_if_overide_methods_valid( method_object)        
 
     def get_oos_compiled(self):
         return "".join(self.output)
@@ -126,7 +132,7 @@ class oosListenerImplementation(oosListener):
                 if self.last_method_def is None or self.known_classes[-1] == "main":
                     self.add_field_to_class(self.last_class_struct, id, decl_type)
                 else:
-                    self.add_field_to_class_method(self.last_class_struct, self.last_method_def, id, decl_type)
+                    self.add_field_to_class_method(self.last_class_struct, self.last_method_obj, id, decl_type)
             # switct to pointers cause it is an object
             self.id_list[:] = [f"*{id}" for id in self.id_list]
             self.output.append(f"{", ".join(self.id_list)}")
@@ -137,7 +143,7 @@ class oosListenerImplementation(oosListener):
                     self.add_field_to_class(self.last_class_struct, id, decl_type)
                     
                 else:
-                    self.add_field_to_class_method(self.last_class_struct, self.last_method_def, id, decl_type)
+                    self.add_field_to_class_method(self.last_class_struct, self.last_method_obj, id, decl_type)
             self.output.append(f"{", ".join(self.id_list)}")
 
         self.output.append(";\n")
@@ -168,11 +174,12 @@ class oosListenerImplementation(oosListener):
             method_name = self.add_method_to_class(constructor_class_name, constructor_class_name, True)
             
             self.last_method_def = method_name
-            self.output.append(f"\n{constructor_class_name}* init${method_name}({constructor_class_name} *self$")
+            self.output.append(f"\n{constructor_class_name}* init${self.last_method_obj.get_method_with_version()}({constructor_class_name} *self$")
 
         self.in_constructor = True
             
     def exitConstructor_def(self, ctx:oosParser.Constructor_defContext):
+        self.check_if_overide_methods_valid(self.known_classes[-1], self.last_method_obj)
         self.last_method_def = None
         self.output.append(f"\n}}\n")
         self.in_constructor = False
@@ -188,10 +195,10 @@ class oosListenerImplementation(oosListener):
 
         for idx in range(len(self.types_list)):
             if self.types_list[idx] != "int":   
-                self.add_field_to_class_method(self.known_classes[-1], self.last_method_def, self.parlist[idx], self.types_list[idx], True)
+                self.add_field_to_class_method(self.known_classes[-1], self.last_method_obj, self.parlist[idx], self.types_list[idx], True)
                 self.output.append(f", {self.types_list[idx]} *{self.parlist[idx]}")
             else:
-                self.add_field_to_class_method(self.known_classes[-1], self.last_method_def, self.parlist[idx], "int", True)
+                self.add_field_to_class_method(self.known_classes[-1], self.last_method_obj, self.parlist[idx], "int", True)
                 self.output.append(f", {self.types_list[idx]} {self.parlist[idx]}")
           
         self.parlist = []
@@ -225,11 +232,12 @@ class oosListenerImplementation(oosListener):
         if "int" not in return_type and "void" not in return_type:
             return_type = return_type +"*"
 
-        self.output.append(f"\n{return_type} {method_name}({self.known_classes[-1]} *self$")
+        self.output.append(f"\n{return_type} {self.last_method_obj.get_method_with_version()}({self.known_classes[-1]} *self$")
 
         self.last_method_def = method_name
 
     def exitMethod_def(self, ctx:oosParser.Method_defContext):
+        self.check_if_overide_methods_valid(self.known_classes[-1], self.last_method_obj)
         self.output.append(f"\n}}\n")
 
     # --------------------------------------------    
