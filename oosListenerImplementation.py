@@ -69,7 +69,12 @@ class oosListenerImplementation(oosListener):
                 print(f"Class '{class_name}' does not have field '{field_name}' declared")
                 exit(0)
         
-         
+    def append_id_to_output_if_declared(self, id):
+        if self.last_method_obj.has_field(id, "int") == True:
+            self.output.append(f"{id}")
+        else:
+            print(f"Field with name '{id}': int not declared in scope of {self.last_method_obj.get_name()}")
+            exit(0)
             
     def check_if_overide_methods_valid(self, class_name, method_object):
         class_obj = self.get_class_obj(class_name)
@@ -281,11 +286,17 @@ class oosListenerImplementation(oosListener):
     def enterAssignment_stat(self, ctx:oosParser.Assignment_statContext):
         if "self." in ctx.getText():
             class_self, assign = ctx.getText().split('.')
+            
             field, val = assign.split('=')
-            print(self.known_classes[-1])
 
             if (self.has_class_field(self.known_classes[-1], field)):
                 self.output.append(f"\tself$ -> {field} = ")
+        elif ctx.ID:
+            id = ctx.ID()
+            self.output.append(f"\t")
+            self.append_id_to_output_if_declared(id)
+            self.output.append(f" = ")
+   
         
     def exitAssignment_stat(self, ctx:oosParser.Assignment_statContext):
         pass

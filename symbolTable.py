@@ -6,7 +6,7 @@ class class_method:
         self.is_constructor = is_constructor
         self.fields = {} 
         self.params = {}
-        self.param_number = 1
+        self.param_number = 0
         self.return_type = None
 
     def set_next_version(self, next):
@@ -34,12 +34,23 @@ class class_method:
         self.fields[field_name] = field_type
 
     def has_field(self, field_name, expected_type=None):
-        if field_name not in self.fields:
+        if str(field_name) not in list(self.fields.keys()):
             return False
         if expected_type is not None:
-            return self.fields[field_name] == expected_type
+            print(self.fields.get(str(field_name)))
+            return str(self.fields.get(str(field_name))) == str(expected_type)
         return True
     
+    def has_field_no_type(self, field_name):
+
+        fields = list(self.fields.keys())
+        for field in fields:
+            if str(field) == str(field_name):
+                return True
+        
+        return False
+        
+
     def get_params(self):
         return self.params
     

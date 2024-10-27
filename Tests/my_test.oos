@@ -10,21 +10,12 @@ class Complex:
         return self;
         ;
 
-    def __init__(self, int y, int x): Complex
+    def __init__(self, Complex y, int x): Complex
         self.real=real;
         self.img=img;
-        return self;
+        y = 1;
         ;
-
-    def get_complex(self): Complex
-            x = x + 1;
-        ;
-    
-    def get_complex(self, int x): -
         
-        ;
-    
-
 class Main:
 
     Complex c1,c2,c3;
