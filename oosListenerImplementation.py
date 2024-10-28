@@ -14,6 +14,8 @@ class oosListenerImplementation(oosListener):
         self.last_method_def = None
         self.last_method_obj = None
         self.in_constructor = False
+        self.parenthesis_stack = []
+        self.last_assignment_type = None #  this is used so i can check if assignement is same type as declaration
 
         self.id_list = []
         self.types_list = []
@@ -26,6 +28,7 @@ class oosListenerImplementation(oosListener):
         new = class_info(class_name)
         if isinstance(new, class_info):
             self.class_entries[new.name] = new
+        return new
     
     def add_field_to_class(self, class_name, field_name, field_type):
         class_obj = self.class_entries.get(class_name)
@@ -68,10 +71,24 @@ class oosListenerImplementation(oosListener):
             else:
                 print(f"Class '{class_name}' does not have field '{field_name}' declared")
                 exit(0)
-        
-    def append_id_to_output_if_declared(self, id):
-        if self.last_method_obj.has_field(id, "int") == True:
-            self.output.append(f"{id}")
+    
+    def get_class_field_type(self, class_name, field_name):
+        return self.get_class_obj(class_name).get_field_type(field_name)
+    
+    def get_method_field_type(self, field_name):
+        return self.last_method_obj.get_field_type(field_name)
+
+    
+    def chech_if_id_declared(self, id, is_self = False):
+        if self.last_class_struct == "main" or is_self:
+            if self.has_class_field(self.last_class_struct, id) == True:
+                
+                return self.get_class_field_type(self.last_class_struct, id)
+            else:
+                print(f"Field with name '{id}': int not declared in scope of {self.last_method_obj.get_name()}")
+                exit(0)
+        elif self.last_method_obj.has_field(id) == True:
+            return self.get_method_field_type(id)
         else:
             print(f"Field with name '{id}': int not declared in scope of {self.last_method_obj.get_name()}")
             exit(0)
@@ -223,7 +240,6 @@ class oosListenerImplementation(oosListener):
     def enterMethod_def(self, ctx:oosParser.Method_defContext):
         method_name = ctx.ID().getText()
         self.last_method_def = method_name
-        print(ctx.getText())
         text, ret = ctx.getText().split(':', 1)
         return_type = ""
         
@@ -261,8 +277,7 @@ class oosListenerImplementation(oosListener):
 
     def exitClass_main_def(self, ctx:oosParser.Method_main_defContext):
         self.output.append(f"\n\n\treturn 0;\n}}")
-        print(self.get_class_obj("Complex"))
-
+        
     # --------------------------------------------    
 
     def enterStatement(self, ctx:oosParser.StatementContext):
@@ -275,7 +290,20 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
 
     def enterReturn_stat(self, ctx:oosParser.Return_statContext):
-         self.output.append(f"\treturn ")
+        self.output.append(f"\treturn ")
+        
+        if ctx.expression():
+            self.last_assignment_type = self.last_method_obj.get_return_type()
+        elif ctx.getChildCount() == 2 and ctx.getChild(1).getText() == "self":
+            self.output.append(f"self$")
+        elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == "self.":
+            id = ctx.ID().getText()
+            type = self.chech_if_id_declared(id, True)
+            if (type != self.last_method_obj.get_return_type()):
+                print(f"On '{self.last_method_obj.get_name()}' : returns '{self.last_method_obj.get_return_type()}', returning incompatible type '{type}'. Line {ctx.start.line}")
+                exit()
+            self.output.append(f"self$ -> {id}")
+
 
     def exitReturn_stat(self, ctx:oosParser.Return_statContext):
         pass
@@ -284,18 +312,19 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
 
     def enterAssignment_stat(self, ctx:oosParser.Assignment_statContext):
-        if "self." in ctx.getText():
-            class_self, assign = ctx.getText().split('.')
+        if "self." in ctx.getText() and self.last_class_struct != "main":
+            class_self, assign = ctx.getText().split('.',1)
             
             field, val = assign.split('=')
 
             if (self.has_class_field(self.known_classes[-1], field)):
+                self.last_assignment_type = self.chech_if_id_declared(field, True)
                 self.output.append(f"\tself$ -> {field} = ")
         elif ctx.ID:
-            id = ctx.ID()
+            id = str(ctx.ID())
             self.output.append(f"\t")
-            self.append_id_to_output_if_declared(id)
-            self.output.append(f" = ")
+            self.last_assignment_type = self.chech_if_id_declared(id)
+            self.output.append(f"{id} = ")
    
         
     def exitAssignment_stat(self, ctx:oosParser.Assignment_statContext):
@@ -304,12 +333,51 @@ class oosListenerImplementation(oosListener):
      # --------------------------------------------    
     
     def enterFactor(self, ctx:oosParser.FactorContext):
+        # this is used to keep track of parenthesis in case of expresion
+
+        is_expression = ctx.expression() is not None
+        self.parenthesis_stack.append(is_expression)
+
         if ctx.INTEGER():
+            if (self.last_assignment_type != "int"):
+                print(f"Assigning or returning '{ctx.getText()}', type int to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
+                exit(0)
             self.output.append(f"{ctx.getText()}")
 
-    def exitFactor(self, ctx:oosParser.FactorContext):
-        pass
+        elif ctx.expression():
+            self.output.append(f"( ")
+        
+        elif ctx.getChildCount() == 2 and ctx.getChild(0).getText() == "self." and ctx.ID():
+            field = str(ctx.getChild(1).getText())
+            if (self.has_class_field(self.known_classes[-1], field) and self.last_class_struct != "main"):
+                self.output.append(f"self$ -> {field}")
+            else:
+                self.output.append(f"{field}")
+        elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == '.':
+            class_id = ctx.getChild(0).getText() 
+            field_id = ctx.getChild(2).getText() 
 
+            class_id_type = self.chech_if_id_declared(class_id)
+            if (self.has_class_field( class_id_type, field_id)):
+                if self.get_class_field_type(class_id_type, field_id) == self.last_assignment_type:
+                    self.output.append(f"{class_id} -> {field_id}")
+                else:
+                    print(f"Assigning or returning '{field_id}', type {class_id} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
+
+        elif ctx.getChildCount() == 1 and ctx.ID():
+
+            id_type = self.chech_if_id_declared(ctx.ID(0).getText())
+            if id_type == self.last_assignment_type:
+                self.output.append(f"{str(ctx.ID(0))}")
+            else:
+                print(f"Assigning or returning '{ctx.getText()}', type {id_type} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
+                exit(0)
+            
+    def exitFactor(self, ctx:oosParser.FactorContext):
+        if (len(self.parenthesis_stack) > 0):
+            was_expression = self.parenthesis_stack.pop()
+            if was_expression:
+                self.output.append(")")
 
     # -----------------Terminating Characters------------------    
 

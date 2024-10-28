@@ -17,6 +17,9 @@ class class_method:
 
     def set_return_type(self, return_type):
         self.return_type = return_type
+    
+    def get_return_type(self):
+        return self.return_type
 
     def set_as_constructor(self):
         self.is_constructor = True
@@ -41,15 +44,9 @@ class class_method:
             return str(self.fields.get(str(field_name))) == str(expected_type)
         return True
     
-    def has_field_no_type(self, field_name):
-
-        fields = list(self.fields.keys())
-        for field in fields:
-            if str(field) == str(field_name):
-                return True
-        
-        return False
-        
+    def get_field_type(self, field_name):
+        if (self.has_field(field_name)):
+            return self.fields.get(field_name)
 
     def get_params(self):
         return self.params
@@ -127,6 +124,11 @@ class class_info:
             return True
         else:
             return False
+    
+    def get_field_type(self, field_name):
+        if (self.has_field(field_name)):
+            return self.fields.get(field_name)
+
 
     def check_if_overide_methods_valid(self, method_object):
         method_name = method_object.get_name()
