@@ -26,6 +26,12 @@ class oosListenerImplementation(oosListener):
 
         self.current_expression = ""
         self.current_function = ""
+        self.boolfactor_count = 0
+        self.boolterm_count = 0
+
+        self.print_expression_list = None
+        self.in_relop = False
+        self.in_boolterm = False
 
         self.id_list = []
         self.types_list = []
@@ -173,6 +179,7 @@ class oosListenerImplementation(oosListener):
             # switct to pointers cause it is an object
             self.id_list[:] = [f"*{id}" for id in self.id_list]
             self.output.append(f"{", ".join(self.id_list)}")
+            self.output.append(";\n")
         else:
             for id in self.id_list:
                
@@ -183,7 +190,7 @@ class oosListenerImplementation(oosListener):
                     self.add_field_to_class_method(self.last_class_struct, self.last_method_obj, id, decl_type)
             self.output.append(f"{", ".join(self.id_list)}")
 
-        self.output.append(";\n")
+            self.output.append(";\n")
 
         self.id_list = []
 
@@ -342,7 +349,7 @@ class oosListenerImplementation(oosListener):
         
     def exitAssignment_stat(self, ctx:oosParser.Assignment_statContext):
         self.last_assignment_type = None
-        self.function_obj_stack[id] = {}
+        self.function_obj_stack = {}
     # --------------------------------------------    
 
     def enterExpression(self, ctx:oosParser.ExpressionContext):
@@ -357,7 +364,10 @@ class oosListenerImplementation(oosListener):
         else:
            
             self.current_expression = completed_expression
-            self.output.append(self.current_expression)
+            if self.print_expression_list == None:
+                self.output.append(self.current_expression)
+            else:
+                self.print_expression_list.append(self.current_expression)
             
     # --------------------------------------------    
     
@@ -369,7 +379,7 @@ class oosListenerImplementation(oosListener):
         # Integer
         if ctx.INTEGER():
 
-            if (self.last_assignment_type != "int" and len(self.function_stack) == 0):
+            if (self.last_assignment_type != "int" and len(self.function_stack) == 0 and self.print_expression_list == None and self.in_relop == False):
                 
                 print(f"Assigning or returning '{ctx.getText()}', type int to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
                 exit(0)
@@ -406,8 +416,8 @@ class oosListenerImplementation(oosListener):
             field_id = ctx.getChild(2).getText() 
 
             class_id_type = self.chech_if_id_declared(class_id)
-            if (self.has_class_field( class_id_type, field_id)):
-                if len(self.function_stack) > 0 or self.get_class_field_type(class_id_type, field_id) == self.last_assignment_type:
+            if (self.has_class_field( class_id_type, field_id) and self.print_expression_list != None):
+                if len(self.function_stack) > 0 or self.get_class_field_type(class_id_type, field_id) == self.last_assignment_type or self.in_relop == True:
                     current_expr += f"{class_id} -> {field_id}"
                 else:
                     print(f"Assigning or returning '{field_id}', type {class_id} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
@@ -417,7 +427,7 @@ class oosListenerImplementation(oosListener):
         elif ctx.getChildCount() == 1 and ctx.ID():
             
             id_type = self.chech_if_id_declared(ctx.ID(0).getText())
-            if len(self.function_stack) > 0 or id_type == self.last_assignment_type:
+            if len(self.function_stack) > 0 or id_type == self.last_assignment_type or self.print_expression_list != None or self.in_relop == True:
                 current_expr += f"{str(ctx.ID(0))}"
             else:
                 print(f"Assigning or returning '{ctx.getText()}', type {id_type} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
@@ -429,7 +439,9 @@ class oosListenerImplementation(oosListener):
     def exitFactor(self, ctx:oosParser.FactorContext):
        if ctx.expression():
             self.expression_stack[-1] += ")"
-
+    
+    # --------------------------------------------    
+    
     def enterFunc_call(self, ctx:oosParser.Func_callContext):
         function_name = ctx.ID().getText()
         if (self.function_obj_stack != {}):
@@ -451,7 +463,8 @@ class oosListenerImplementation(oosListener):
         else:
             self.current_expression = function_call
 
-
+    # --------------------------------------------    
+    
     def enterArglist(self, ctx:oosParser.ArglistContext):
         if(ctx.argitem()):
             self.expression_stack.append("")
@@ -470,10 +483,125 @@ class oosListenerImplementation(oosListener):
                 
                 self.function_stack[-1] += completed_expression
 
+    # --------------------------------------------    
+
+    def enterDirect_call_stat(self, ctx:oosParser.Direct_call_statContext):
+      pass
+
+    def exitDirect_call_stat(self, ctx:oosParser.Direct_call_statContext):
+        pass
+
+    # --------------------------------------------    
+
+    def enterPrint_stat(self, ctx:oosParser.Print_statContext):
+        self.print_expression_list = []
+        self.output.append(f"\tprintf(\"")
+
+    def exitPrint_stat(self, ctx:oosParser.Print_statContext):
+        
+        fields=""
+        formating = ""
+ 
+        for expression in self.print_expression_list:
+            fields += "%d"
+            formating += str(", ")+expression
+        self.output.append(f"{fields}\"{formating})")
+
+        self.print_expression_list = None
+
+    # --------------------------------------------    
+
+    def enterInput_stat(self, ctx:oosParser.Input_statContext):
+        
+        # 'input' ID
+        id = None
+        type = None
+        #   in main 
+        if ctx.getChildCount() == 2 and ctx.ID:
+            id = ctx.ID().getText()
+            type = self.chech_if_id_declared(id)
+            
+        # in class input
+        elif ctx.getChildCount() == 3 and ctx.ID:
+            id = ctx.ID().getText()
+            type = self.chech_if_id_declared(id, True)
+    
+            if self.last_class_struct != "main":
+                id = "self$ -> " + id
+        if (type != "int"):
+            print(f"You are trying to input on an 'Object' type which is illegal . Line {ctx.start.line}")
+            exit(0)
+
+
+        self.output.append(f"\tscanf(\"%d\", &{id})")
+        print(id)
+
+    def exitInput_stat(self, ctx:oosParser.Input_statContext):
+        pass
+
+    # --------------------------------------------    
+
+    def enterCondition(self, ctx:oosParser.ConditionContext):
+        self.boolterm_count = len(ctx.boolterm()) - 1
+
+    def exitCondition(self, ctx:oosParser.ConditionContext):
+        
+        self.output.append(")\n\t{\n\t")
+    # --------------------------------------------    
+
+    def enterBoolterm(self, ctx:oosParser.BooltermContext):
+        pass
+
+    def exitBoolterm(self, ctx:oosParser.BooltermContext):
+        if self.boolterm_count > 0:
+            self.output.append(" || ")
+            self.boolfactor_count -= 1 
+
+    # --------------------------------------------    
+    
+    def enterBoolfactor(self, ctx:oosParser.BoolfactorContext):
+        self.in_relop = True
+                
+        if ctx.getChildCount() == 4 and ctx.getChild(0).getText() == 'not':
+            self.output.append("!(") 
+
+        elif ctx.getChildCount() == 3 and ctx.getChild(0).getText() == '[':
+            self.output.append("(")
+
+        elif ctx.expression(0) and ctx.rel_oper() and ctx.expression(1):
+            pass
+
+    def exitBoolfactor(self, ctx:oosParser.BoolfactorContext):
+        self.in_relop = False
+
+        if self.boolfactor_count > 0:
+            self.output.append(" && ")
+            self.boolfactor_count -= 1
+        if ctx.getChildCount() in [3, 4] and ctx.getChild(0).getText() in ['not', '[']:
+            self.output.append(")")
+    # --------------------------------------------    
+    
+    def enterBoolterm(self, ctx:oosParser.BooltermContext):
+        self.boolfactor_count = len(ctx.boolfactor()) - 1
+
+    def exitBoolterm(self, ctx:oosParser.BooltermContext):
+        if self.boolterm_count > 0:
+            self.output.append(" || ")
+            self.boolterm_count -= 1
+
+    # --------------------------------------------    
+
+    def enterWhile_stat(self, ctx:oosParser.While_statContext):
+        self.output.append("\twhile(")
+
+    def exitWhile_stat(self, ctx:oosParser.While_statContext):
+        self.output.append(f"\n\t}}")
+
     # -----------------Terminating Characters------------------    
 
     def enterRel_oper(self, ctx:oosParser.Rel_operContext):
-        self.output.append(f" {ctx.getText()} ")
+        if ctx.getChildCount() > 0:
+            self.output.append(f" {ctx.getText()} ")
 
     # --------------------------------------------    
 

@@ -1,67 +1,17 @@
 
-##############################################################
-
-class Complex:
-
-    int real,img;
-    ;
-
-
-    def __init__(self): Complex
-        self.real=0;
-        self.img=0;
-        return self;
-        ;
-
-    def __init__(self, int real, int img): Complex
-        self.real=real;
-        self.img=img;
-        return self;
-        ;
-
-    def get_complex(self): Complex
-        return self;
-        ;
-
-    def set_complex(self, int real, int img): -
-        self.real=real;
-        self.img=img;
-        ;
-
-    def get_real(self): int
-        return self.real;
-        ;
-
-    def get_img(self): int
-        return self.img;
-        ;
-
-    def squared_modulus(self): int
-        return self.real * self.real + self.img * self.img;
-        ;
-
-    def add(self, Complex c1, Complex c2): -
-        self.real = c1.real + c2.real;
-        self.img = c1.img + c2.img;
-        ;
-
-    def print_complex(self): -
-        print self.real , self.img;
-        ;
-
-##############################################################
 
 class Main:
-
-    Complex c1,c2,c3;
+    int c, y;
+    
     ;
 
 
     def main(self): -
-
-        c1 = Complex(1,2);
-        c2 = Complex(3,4);
-        c3 = Complex();
-        ;
-
+        c = 0;
+        while (c > 10 and y==0):
+            c = c + 1;
+            y = 1;
+            ;
+        endwhile;
+    ;
 ##############################################################

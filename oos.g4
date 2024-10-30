@@ -89,7 +89,7 @@ statements :   statement (';' statement )*
         ;
 
 
-statement
+boolterm
         :   assignment_stat
         |   direct_call_stat
         |   if_stat
