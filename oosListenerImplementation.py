@@ -2,6 +2,7 @@ from oosListener import oosListener
 from oosParser import oosParser
 from symbolTable import *
 import copy
+import traceback
 
 class oosListenerImplementation(oosListener):
 
@@ -16,6 +17,15 @@ class oosListenerImplementation(oosListener):
         self.in_constructor = False
         self.parenthesis_stack = []
         self.last_assignment_type = None #  this is used so i can check if assignement is same type as declaration
+        
+        #   used for expression
+        self.expression_stack = []
+        self.function_stack = []
+
+        self.function_obj_stack = {}
+
+        self.current_expression = ""
+        self.current_function = ""
 
         self.id_list = []
         self.types_list = []
@@ -65,6 +75,8 @@ class oosListenerImplementation(oosListener):
 
     def has_class_field(self, class_name, field_name):
         class_obj = self.get_class_obj(class_name)
+        
+
         if (class_obj):
             if (class_obj.has_field(field_name)):
                 return True
@@ -324,60 +336,139 @@ class oosListenerImplementation(oosListener):
             id = str(ctx.ID())
             self.output.append(f"\t")
             self.last_assignment_type = self.chech_if_id_declared(id)
+            self.function_obj_stack[id] = self.last_assignment_type # hold that in case it is a constructor call
             self.output.append(f"{id} = ")
    
         
     def exitAssignment_stat(self, ctx:oosParser.Assignment_statContext):
-        pass
+        self.last_assignment_type = None
+        self.function_obj_stack[id] = {}
+    # --------------------------------------------    
 
-     # --------------------------------------------    
+    def enterExpression(self, ctx:oosParser.ExpressionContext):
+        self.expression_stack.append("")
+
+ 
+    def exitExpression(self, ctx:oosParser.ExpressionContext):
+        completed_expression = self.expression_stack.pop()
+        if self.expression_stack:
+            
+            self.expression_stack[-1] += completed_expression
+        else:
+           
+            self.current_expression = completed_expression
+            self.output.append(self.current_expression)
+            
+    # --------------------------------------------    
     
     def enterFactor(self, ctx:oosParser.FactorContext):
-        # this is used to keep track of parenthesis in case of expresion
+        
+        current_expr = self.expression_stack[-1] if self.expression_stack else ""
 
-        is_expression = ctx.expression() is not None
-        self.parenthesis_stack.append(is_expression)
-
+        
+        # Integer
         if ctx.INTEGER():
-            if (self.last_assignment_type != "int"):
+
+            if (self.last_assignment_type != "int" and len(self.function_stack) == 0):
+                
                 print(f"Assigning or returning '{ctx.getText()}', type int to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
                 exit(0)
-            self.output.append(f"{ctx.getText()}")
-
+            current_expr += f"{ctx.getText()}"
+       
+        # (expression)
         elif ctx.expression():
-            self.output.append(f"( ")
+            
+            current_expr += f"("
         
+        # self.id
         elif ctx.getChildCount() == 2 and ctx.getChild(0).getText() == "self." and ctx.ID():
+            
             field = str(ctx.getChild(1).getText())
+            
             if (self.has_class_field(self.known_classes[-1], field) and self.last_class_struct != "main"):
-                self.output.append(f"self$ -> {field}")
+                current_expr += f"self$ -> {field}"
             else:
-                self.output.append(f"{field}")
+                current_expr += f"{field}"
+
+        elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == '.' and ctx.ID and ctx.func_call():
+            print("funciton call")
+
+
+        # contructor call
+        elif ctx.func_call():
+            self.expression_stack.append(current_expr)
+            self.function_stack.append("") 
+        
+        # id.id
         elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == '.':
+            
             class_id = ctx.getChild(0).getText() 
             field_id = ctx.getChild(2).getText() 
 
             class_id_type = self.chech_if_id_declared(class_id)
             if (self.has_class_field( class_id_type, field_id)):
-                if self.get_class_field_type(class_id_type, field_id) == self.last_assignment_type:
-                    self.output.append(f"{class_id} -> {field_id}")
+                if len(self.function_stack) > 0 or self.get_class_field_type(class_id_type, field_id) == self.last_assignment_type:
+                    current_expr += f"{class_id} -> {field_id}"
                 else:
                     print(f"Assigning or returning '{field_id}', type {class_id} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
-
+                    exit(0)
+        
+        # id
         elif ctx.getChildCount() == 1 and ctx.ID():
-
+            
             id_type = self.chech_if_id_declared(ctx.ID(0).getText())
-            if id_type == self.last_assignment_type:
-                self.output.append(f"{str(ctx.ID(0))}")
+            if len(self.function_stack) > 0 or id_type == self.last_assignment_type:
+                current_expr += f"{str(ctx.ID(0))}"
             else:
                 print(f"Assigning or returning '{ctx.getText()}', type {id_type} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
                 exit(0)
+
+        if self.expression_stack:
+            self.expression_stack[-1] = current_expr
             
     def exitFactor(self, ctx:oosParser.FactorContext):
-        if (len(self.parenthesis_stack) > 0):
-            was_expression = self.parenthesis_stack.pop()
-            if was_expression:
-                self.output.append(")")
+       if ctx.expression():
+            self.expression_stack[-1] += ")"
+
+    def enterFunc_call(self, ctx:oosParser.Func_callContext):
+        function_name = ctx.ID().getText()
+        if (self.function_obj_stack != {}):
+            id, type = self.function_obj_stack.popitem()
+            if type == function_name:
+                self.function_stack.append(f"{function_name}({id}")
+            else:
+                # serch if class with id has this method
+                print(f"Invalid method call: {id, type} where it is {function_name}")
+                exit(0)
+
+    def exitFunc_call(self, ctx:oosParser.Func_callContext):
+        function_call = self.function_stack.pop()
+        if self.expression_stack:
+            function_call += self.expression_stack.pop() + ")"
+        if self.expression_stack:
+            
+            self.expression_stack[-1] += function_call
+        else:
+            self.current_expression = function_call
+
+
+    def enterArglist(self, ctx:oosParser.ArglistContext):
+        if(ctx.argitem()):
+            self.expression_stack.append("")
+    
+    def enterArgitem(self, ctx:oosParser.ArgitemContext):
+        if (ctx.expression()):
+            self.expression_stack[-1] +=", "
+
+    def exitArgitem(self, ctx:oosParser.ArgitemContext):
+        pass
+
+    def exitArglist(self, ctx:oosParser.ArglistContext):
+        if(ctx.argitem()):
+            completed_expression = self.expression_stack.pop()
+            if self.expression_stack:
+                
+                self.function_stack[-1] += completed_expression
 
     # -----------------Terminating Characters------------------    
 
@@ -387,10 +478,12 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
 
     def enterAdd_oper(self, ctx:oosParser.Add_operContext):
-        self.output.append(f" {ctx.getText()} ")
+        if self.expression_stack:
+            self.expression_stack[-1] += (f" {ctx.getText()} ")
 
     # --------------------------------------------    
 
     def enterMul_oper(self, ctx:oosParser.Mul_operContext):
-         self.output.append(f" {ctx.getText()} ")
+        if self.expression_stack:
+            self.expression_stack[-1] += (f" {ctx.getText()} ")
 

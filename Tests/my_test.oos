@@ -33,7 +33,7 @@ class Complex:
         ;
 
     def get_img(self): int
-        return self.real;
+        return self.img;
         ;
 
     def squared_modulus(self): int
@@ -51,7 +51,7 @@ class Complex:
 
 ##############################################################
 
-class main:
+class Main:
 
     Complex c1,c2,c3;
     ;
@@ -62,13 +62,6 @@ class main:
         c1 = Complex(1,2);
         c2 = Complex(3,4);
         c3 = Complex();
-        c1.print_complex();
-        c2.print_complex();
-        c3.add(c1,c2);
-        c3.print_complex();
-        c3.set_real(c1.squared_modulus());
-        c3.set_img(c2.squared_modulus());
-        c3.print_complex();
         ;
 
 ##############################################################
