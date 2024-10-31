@@ -304,7 +304,8 @@ class oosListenerImplementation(oosListener):
 
     # Exit a parse tree produced by oosParser#statement.
     def exitStatement(self, ctx:oosParser.StatementContext):
-        self.output.append(f";\n")
+        if (ctx.getChildCount()):
+            self.output.append(f"\n")
 
     # --------------------------------------------    
 
@@ -348,6 +349,7 @@ class oosListenerImplementation(oosListener):
    
         
     def exitAssignment_stat(self, ctx:oosParser.Assignment_statContext):
+        self.output.append(f";")
         self.last_assignment_type = None
         self.function_obj_stack = {}
     # --------------------------------------------    
@@ -411,12 +413,11 @@ class oosListenerImplementation(oosListener):
         
         # id.id
         elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == '.':
-            
             class_id = ctx.getChild(0).getText() 
             field_id = ctx.getChild(2).getText() 
 
             class_id_type = self.chech_if_id_declared(class_id)
-            if (self.has_class_field( class_id_type, field_id) and self.print_expression_list != None):
+            if (self.has_class_field( class_id_type, field_id) or self.print_expression_list != None):
                 if len(self.function_stack) > 0 or self.get_class_field_type(class_id_type, field_id) == self.last_assignment_type or self.in_relop == True:
                     current_expr += f"{class_id} -> {field_id}"
                 else:
@@ -505,7 +506,7 @@ class oosListenerImplementation(oosListener):
         for expression in self.print_expression_list:
             fields += "%d"
             formating += str(", ")+expression
-        self.output.append(f"{fields}\"{formating})")
+        self.output.append(f"{fields}\"{formating});")
 
         self.print_expression_list = None
 
@@ -596,6 +597,29 @@ class oosListenerImplementation(oosListener):
 
     def exitWhile_stat(self, ctx:oosParser.While_statContext):
         self.output.append(f"\n\t}}")
+
+
+    # --------------------------------------------    
+    def enterIf_stat(self, ctx:oosParser.If_statContext):
+        self.output.append("\tif(")
+
+    # Exit a parse tree produced by oosParser#if_stat.
+    def exitIf_stat(self, ctx:oosParser.If_statContext):
+        pass
+
+    # --------------------------------------------    
+
+        # Enter a parse tree produced by oosParser#else_part.
+    def enterElse_part(self, ctx:oosParser.Else_partContext):
+        self.output.append(f"\n\t}}")
+        if (ctx.statements()):
+            self.output.append(f"\n\telse\n\t{{\n\t")
+
+
+    # Exit a parse tree produced by oosParser#else_part.
+    def exitElse_part(self, ctx:oosParser.Else_partContext):
+        if (ctx.statements()):
+            self.output.append(f"\n\t}}")
 
     # -----------------Terminating Characters------------------    
 
