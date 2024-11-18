@@ -39,7 +39,18 @@ class oosListenerImplementation(oosListener):
 
         self.parlist = []
         self.actual_pars = []
-    
+
+        self.tabs = 0
+
+    def tabbing(self):
+        return self.tabs * "\t"
+
+    def indent(self):
+        self.tabs = self.tabs + 1
+
+    def deindent(self):
+        self.tabs = self.tabs - 1
+
     def add_class(self, class_name):
         new = class_info(class_name)
         if isinstance(new, class_info):
@@ -132,7 +143,8 @@ class oosListenerImplementation(oosListener):
         class_name = ctx.class_name(0).ID().getText()
         self.last_class_struct = class_name
 
-        self.output.append(f"\ntypedef struct {self.last_class_struct} {{")
+        self.output.append(f"\ntypedef struct {self.last_class_struct} \n{{")
+        self.indent()
         self.known_classes.append(f"{self.last_class_struct}")
         self.output.append("\n")
 
@@ -145,11 +157,11 @@ class oosListenerImplementation(oosListener):
 
     def enterClass_body(self, ctx:oosParser.Class_bodyContext):
         self.output.append(f"}} {self.last_class_struct};\n")
-    
+        self.deindent()
     # --------------------------------------------
 
     def enterDeclarations(self, ctx:oosParser.DeclarationsContext):
-        pass
+       pass
 
     # Exit a parse tree produced by oosParser#declarations.
     def exitDeclarations(self, ctx:oosParser.DeclarationsContext):
@@ -165,10 +177,9 @@ class oosListenerImplementation(oosListener):
                 self.id_list.append(f"{id.getText()}")
 
     def exitDecl_line(self, ctx:oosParser.Decl_lineContext):
-        self.output.append("\t")
-
+       
         decl_type = self.types_list.pop()
-        self.output.append(f"{decl_type} ")
+        self.output.append(f"{self.tabbing()}{decl_type} ")
         
         if decl_type != "int":
             for id in self.id_list:
@@ -219,14 +230,19 @@ class oosListenerImplementation(oosListener):
             
             self.last_method_def = method_name
             self.output.append(f"\n{constructor_class_name}* init${self.last_method_obj.get_method_with_version()}({constructor_class_name} *self$")
+        
+        self.indent()
 
         self.in_constructor = True
-            
+        
+
     def exitConstructor_def(self, ctx:oosParser.Constructor_defContext):
         self.check_if_overide_methods_valid(self.known_classes[-1], self.last_method_obj)
         self.last_method_def = None
         self.output.append(f"\n}}\n")
         self.in_constructor = False
+
+        self.deindent()
 
    
     def enterParlist(self, ctx:oosParser.ParlistContext):
@@ -249,10 +265,18 @@ class oosListenerImplementation(oosListener):
         self.types_list = []
 
         self.output.append(f")\n{{\n")
-        
+       
         # defining dynamic memory allocation for new object if in constructor. used this because it is generating malloc even on norma functions
         if self.in_constructor:
-            self.output.append(f"\tif(self$ == NULL)\n\t{{\t\n\t\tself$ = ({self.last_class_struct} *)malloc(sizeof({self.last_class_struct}));\n\t}}\n\n")
+          
+            self.output.append(f"{self.tabbing()}if(self$ == NULL)\n")
+
+            self.output.append(f"{self.tabbing()}")
+            self.indent()
+            self.output.append(f"{{\n{self.tabbing()}self$ = ({self.last_class_struct} *)malloc(sizeof({self.last_class_struct}));\n")
+            self.deindent()
+            self.output.append(f"{self.tabbing()}}}\n\n")
+            
 
     # --------------------------------------------
 
@@ -262,6 +286,9 @@ class oosListenerImplementation(oosListener):
         text, ret = ctx.getText().split(':', 1)
         return_type = ""
         
+        self.indent()
+
+
         # Check for the return type
         if "int" in ret:
             return_type = "int"
@@ -282,6 +309,7 @@ class oosListenerImplementation(oosListener):
 
     def exitMethod_def(self, ctx:oosParser.Method_defContext):
         self.check_if_overide_methods_valid(self.known_classes[-1], self.last_method_obj)
+        self.deindent()
         self.output.append(f"\n}}\n")
 
     # --------------------------------------------    
@@ -292,6 +320,8 @@ class oosListenerImplementation(oosListener):
         self.add_class("main")
 
         self.output.append(f"\nint main(void)\n{{\n")
+        
+        self.indent()
         
 
     def exitClass_main_def(self, ctx:oosParser.Method_main_defContext):
@@ -310,7 +340,7 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
 
     def enterReturn_stat(self, ctx:oosParser.Return_statContext):
-        self.output.append(f"\treturn ")
+        self.output.append(f"{self.tabbing()}return ")
         
         if ctx.expression():
             self.last_assignment_type = self.last_method_obj.get_return_type()
@@ -326,7 +356,7 @@ class oosListenerImplementation(oosListener):
 
 
     def exitReturn_stat(self, ctx:oosParser.Return_statContext):
-        pass
+        self.output.append(f";")
         # here i should check if the returns made are type of return type of the method and raise error
 
     # --------------------------------------------    
@@ -339,10 +369,10 @@ class oosListenerImplementation(oosListener):
 
             if (self.has_class_field(self.known_classes[-1], field)):
                 self.last_assignment_type = self.chech_if_id_declared(field, True)
-                self.output.append(f"\tself$ -> {field} = ")
+                self.output.append(f"{self.tabbing()}self$ -> {field} = ")
         elif ctx.ID:
             id = str(ctx.ID())
-            self.output.append(f"\t")
+            self.output.append(f"{self.tabbing()}")
             self.last_assignment_type = self.chech_if_id_declared(id)
             self.function_obj_stack[id] = self.last_assignment_type # hold that in case it is a constructor call
             self.output.append(f"{id} = ")
@@ -496,7 +526,7 @@ class oosListenerImplementation(oosListener):
 
     def enterPrint_stat(self, ctx:oosParser.Print_statContext):
         self.print_expression_list = []
-        self.output.append(f"\tprintf(\"")
+        self.output.append(f"{self.tabbing()}printf(\"")
 
     def exitPrint_stat(self, ctx:oosParser.Print_statContext):
         
@@ -504,9 +534,9 @@ class oosListenerImplementation(oosListener):
         formating = ""
  
         for expression in self.print_expression_list:
-            fields += "%d"
+            fields += "%d "
             formating += str(", ")+expression
-        self.output.append(f"{fields}\"{formating});")
+        self.output.append(f"{fields}\\n\"{formating});")
 
         self.print_expression_list = None
 
@@ -534,8 +564,7 @@ class oosListenerImplementation(oosListener):
             exit(0)
 
 
-        self.output.append(f"\tscanf(\"%d\", &{id})")
-        print(id)
+        self.output.append(f"{self.tabbing()}scanf(\"%d\", &{id})")
 
     def exitInput_stat(self, ctx:oosParser.Input_statContext):
         pass
@@ -547,7 +576,9 @@ class oosListenerImplementation(oosListener):
 
     def exitCondition(self, ctx:oosParser.ConditionContext):
         
-        self.output.append(")\n\t{\n\t")
+        self.output.append(f")\n{self.tabbing()}{{\n")
+        self.indent()
+
     # --------------------------------------------    
 
     def enterBoolterm(self, ctx:oosParser.BooltermContext):
@@ -593,33 +624,36 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
 
     def enterWhile_stat(self, ctx:oosParser.While_statContext):
-        self.output.append("\twhile(")
+        self.output.append(f"\n{self.tabbing()}while(")
 
     def exitWhile_stat(self, ctx:oosParser.While_statContext):
-        self.output.append(f"\n\t}}")
+        self.deindent()
+        self.output.append(f"\n{self.tabbing()}}}")
 
 
     # --------------------------------------------    
     def enterIf_stat(self, ctx:oosParser.If_statContext):
-        self.output.append("\tif(")
+        self.output.append(f"\n{self.tabbing()}if(")
 
     # Exit a parse tree produced by oosParser#if_stat.
     def exitIf_stat(self, ctx:oosParser.If_statContext):
-        pass
-
+        self.output.append(f"\n")
+        
     # --------------------------------------------    
 
         # Enter a parse tree produced by oosParser#else_part.
     def enterElse_part(self, ctx:oosParser.Else_partContext):
-        self.output.append(f"\n\t}}")
+        self.deindent()
+        self.output.append(f"\n{self.tabbing()}}}")
         if (ctx.statements()):
-            self.output.append(f"\n\telse\n\t{{\n\t")
-
+            self.output.append(f"\n{self.tabbing()}else\n{self.tabbing()}{{\n")
+            self.indent()
 
     # Exit a parse tree produced by oosParser#else_part.
     def exitElse_part(self, ctx:oosParser.Else_partContext):
         if (ctx.statements()):
-            self.output.append(f"\n\t}}")
+            self.deindent()
+            self.output.append(f"\n{self.tabbing()}}}")
 
     # -----------------Terminating Characters------------------    
 

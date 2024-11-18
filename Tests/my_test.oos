@@ -4,10 +4,13 @@
 class Complex:
 
     int real,img;
+    int x;
     ;
 
 
     def __init__(self): Complex
+        int x;
+        ;
         self.real=0;
         self.img=0;
         return self;
@@ -54,13 +57,20 @@ class Complex:
 class Main:
 
     Complex c1,c2,c3;
-    int x;
+    int x, y;
     ;
 
 
     def main(self): -
-        if (x == 1):
+        x = 1;
+        while (x == 1):
             x = x + 1;
-        endif;
+            if (x == 2):
+                x = 1;
+                print self.x;      
+            endif
+        endwhile;
+
+        print self.x, self.y;      
     ;
 ##############################################################
