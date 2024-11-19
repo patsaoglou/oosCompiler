@@ -17,6 +17,7 @@ class oosListenerImplementation(oosListener):
         self.in_constructor = False
         self.parenthesis_stack = []
         self.last_assignment_type = None #  this is used so i can check if assignement is same type as declaration
+        self.in_struct = False
         
         #   used for expression
         self.expression_stack = []
@@ -75,7 +76,6 @@ class oosListenerImplementation(oosListener):
             exit(0)
 
     def add_method_to_class(self, class_name, method_name, is_constructor = False, return_type =None):
-
         class_obj = self.class_entries.get(class_name)
         method = class_obj.add_method(method_name, is_constructor, return_type)
         self.last_method_obj = method[1]
@@ -144,6 +144,7 @@ class oosListenerImplementation(oosListener):
         self.last_class_struct = class_name
 
         self.output.append(f"\ntypedef struct {self.last_class_struct} \n{{")
+        self.in_struct = True
         self.indent()
         self.known_classes.append(f"{self.last_class_struct}")
         self.output.append("\n")
@@ -157,6 +158,7 @@ class oosListenerImplementation(oosListener):
 
     def enterClass_body(self, ctx:oosParser.Class_bodyContext):
         self.output.append(f"}} {self.last_class_struct};\n")
+        self.in_struct = False
         self.deindent()
     # --------------------------------------------
 
@@ -171,7 +173,6 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------
 
     def enterDecl_line(self, ctx:oosParser.Decl_lineContext):
-        
         if ctx.ID():
             for id in ctx.ID():
                 self.id_list.append(f"{id.getText()}")
@@ -179,19 +180,21 @@ class oosListenerImplementation(oosListener):
     def exitDecl_line(self, ctx:oosParser.Decl_lineContext):
        
         decl_type = self.types_list.pop()
-        self.output.append(f"{self.tabbing()}{decl_type} ")
+        
         
         if decl_type != "int":
+            self.output.append(f"{self.tabbing()}struct {decl_type} ")
             for id in self.id_list:
                 if self.last_method_def is None or self.known_classes[-1] == "main":
                     self.add_field_to_class(self.last_class_struct, id, decl_type)
                 else:
                     self.add_field_to_class_method(self.last_class_struct, self.last_method_obj, id, decl_type)
             # switct to pointers cause it is an object
-            self.id_list[:] = [f"*{id}" for id in self.id_list]
-            self.output.append(f"{", ".join(self.id_list)}")
+            self.id_list[:] = [f"*{id} = NULL" if self.in_struct==False else id for id in self.id_list]
+            self.output.append(f"{", ".join(self.id_list )}")
             self.output.append(";\n")
         else:
+            self.output.append(f"{self.tabbing()}{decl_type} ")
             for id in self.id_list:
                
                 if self.last_method_def is None or self.known_classes[-1] == "main":
@@ -283,11 +286,11 @@ class oosListenerImplementation(oosListener):
     def enterMethod_def(self, ctx:oosParser.Method_defContext):
         method_name = ctx.ID().getText()
         self.last_method_def = method_name
-        text, ret = ctx.getText().split(':', 1)
+        ret = ctx.getChild(4).getText()
+
         return_type = ""
         
         self.indent()
-
 
         # Check for the return type
         if "int" in ret:
@@ -330,13 +333,12 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
 
     def enterStatement(self, ctx:oosParser.StatementContext):
-        pass
+        pass    
 
     # Exit a parse tree produced by oosParser#statement.
     def exitStatement(self, ctx:oosParser.StatementContext):
         if (ctx.getChildCount()):
-            self.output.append(f"\n")
-
+            self.output.append(f"\n")           
     # --------------------------------------------    
 
     def enterReturn_stat(self, ctx:oosParser.Return_statContext):
@@ -361,7 +363,7 @@ class oosListenerImplementation(oosListener):
 
     # --------------------------------------------    
 
-    def enterAssignment_stat(self, ctx:oosParser.Assignment_statContext):
+    def enterAssignment_stat(self, ctx:oosParser.Assignment_statContext):     
         if "self." in ctx.getText() and self.last_class_struct != "main":
             class_self, assign = ctx.getText().split('.',1)
             
@@ -433,7 +435,13 @@ class oosListenerImplementation(oosListener):
                 current_expr += f"{field}"
 
         elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == '.' and ctx.ID and ctx.func_call():
-            print("funciton call")
+            id = str(ctx.getChild(0).getText())
+            print(id)
+            self.last_assignment_type = self.chech_if_id_declared(id)
+            self.function_obj_stack[id] = self.last_assignment_type 
+
+            self.expression_stack.append(current_expr)
+            self.function_stack.append("") 
 
 
         # contructor call
@@ -480,13 +488,16 @@ class oosListenerImplementation(oosListener):
             if type == function_name:
                 self.function_stack.append(f"{function_name}({id}")
             else:
-                # serch if class with id has this method
-                print(f"Invalid method call: {id, type} where it is {function_name}")
-                exit(0)
+                self.function_stack.append(f"{function_name}({id}")
+                # # serch if class with id has this method
+                # print(f"Invalid method call: {id, type} where it is {function_name}")
+                # exit(0)
 
     def exitFunc_call(self, ctx:oosParser.Func_callContext):
         function_call = self.function_stack.pop()
+        
         if self.expression_stack:
+            
             function_call += self.expression_stack.pop() + ")"
         if self.expression_stack:
             
@@ -495,10 +506,11 @@ class oosListenerImplementation(oosListener):
             self.current_expression = function_call
 
     # --------------------------------------------    
-    
+            
     def enterArglist(self, ctx:oosParser.ArglistContext):
         if(ctx.argitem()):
             self.expression_stack.append("")
+            
     
     def enterArgitem(self, ctx:oosParser.ArgitemContext):
         if (ctx.expression()):
@@ -511,16 +523,22 @@ class oosListenerImplementation(oosListener):
         if(ctx.argitem()):
             completed_expression = self.expression_stack.pop()
             if self.expression_stack:
-                
+           
                 self.function_stack[-1] += completed_expression
+    
 
     # --------------------------------------------    
 
     def enterDirect_call_stat(self, ctx:oosParser.Direct_call_statContext):
-      pass
+        if (ctx.ID):
+            id = str(ctx.ID())
+            self.output.append(f"{self.tabbing()}")
+            self.last_assignment_type = self.chech_if_id_declared(id)
+            self.function_obj_stack[id] = self.last_assignment_type 
+            self.expression_stack.append("") # that is to have an initial expression in the stack to get the final function call parameters 
 
     def exitDirect_call_stat(self, ctx:oosParser.Direct_call_statContext):
-        pass
+        self.output.append(f"{self.current_expression};")
 
     # --------------------------------------------    
 
