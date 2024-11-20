@@ -1,13 +1,28 @@
+class Hello:
 
-##############################################################
+    int hello;
+    ;
+
+
+    def __init__(self): Hello
+        self.hello=0;
+        return self;
+        ;
+
+    def get_hello(self): - 
+        print self.hello;
+        ;
+
 
 class Complex:
 
     int real,img;
+    Hello h;
     ;
 
 
     def __init__(self): Complex
+        self.h = Hello();
         self.real=0;
         self.img=0;
         return self;
@@ -62,11 +77,13 @@ class Complex:
 class Main:
 
     Complex c1,c2,c3;
+    Hello h; 
     ;
 
 
     def main(self): -
-
+        h = Hello();
+        h.get_hello();
         c1 = Complex(1,2);
         c2 = Complex(3,4);
         c3 = Complex();

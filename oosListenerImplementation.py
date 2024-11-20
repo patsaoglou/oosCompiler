@@ -1,8 +1,7 @@
 from oosListener import oosListener
 from oosParser import oosParser
 from symbolTable import *
-import copy
-import traceback
+
 
 class oosListenerImplementation(oosListener):
 
@@ -104,11 +103,12 @@ class oosListenerImplementation(oosListener):
     def has_class_field(self, class_name, field_name):
         class_obj = self.get_class_obj(class_name)
         
-
+        print(class_obj)
         if (class_obj):
             if (class_obj.has_field(field_name)):
                 return True
             else:
+                
                 print(f"Class '{class_name}' does not have field '{field_name}' declared")
                 exit(0)
     
@@ -135,10 +135,16 @@ class oosListenerImplementation(oosListener):
             
     def check_if_overide_methods_valid(self, class_name, method_object):
         class_obj = self.get_class_obj(class_name)
+    
         class_obj.check_if_overide_methods_valid( method_object)        
 
     def get_oos_compiled(self):
-        return "".join(self.output)
+        compiled_content = "".join(self.output)
+        
+        with open("out.c", "w") as file:
+            file.write(compiled_content)
+        
+        return compiled_content
 
     # --------------------------------------------
 
@@ -163,7 +169,7 @@ class oosListenerImplementation(oosListener):
         self.add_class(class_name)
 
     def exitClass_def(self, ctx:oosParser.Class_defContext):
-        pass
+        self.last_method_def = None
 
     # --------------------------------------------
 
@@ -192,7 +198,6 @@ class oosListenerImplementation(oosListener):
        
         decl_type = self.types_list.pop()
         
-        
         if decl_type != "int":
             self.output.append(f"{self.tabbing()}struct {decl_type} ")
             for id in self.id_list:
@@ -201,7 +206,10 @@ class oosListenerImplementation(oosListener):
                 else:
                     self.add_field_to_class_method(self.last_class_struct, self.last_method_obj, id, decl_type)
             # switct to pointers cause it is an object
-            self.id_list[:] = [f"*{id} = NULL" if self.in_struct==False else id for id in self.id_list]
+            if self.in_struct==True:
+                self.id_list[:] = [f"*{id}" for id in self.id_list]
+            else:
+                 self.id_list[:] = [f"*{id} = NULL" for id in self.id_list]
             self.output.append(f"{", ".join(self.id_list )}")
             self.output.append(";\n")
         else:
@@ -376,12 +384,13 @@ class oosListenerImplementation(oosListener):
 
     def enterAssignment_stat(self, ctx:oosParser.Assignment_statContext):     
         if "self." in ctx.getText() and self.last_class_struct != "main":
-            class_self, assign = ctx.getText().split('.',1)
             
+            class_self, assign = ctx.getText().split('.',1)
             field, val = assign.split('=')
 
             if (self.has_class_field(self.known_classes[-1], field)):
                 self.last_assignment_type = self.chech_if_id_declared(field, True)
+                self.function_obj_stack.append((f"self$ -> {field}", self.last_assignment_type))  # hold that just in case it is consturctor or call in the function
                 self.output.append(f"{self.tabbing()}self$ -> {field} = ")
         elif ctx.ID:
             id = str(ctx.ID())

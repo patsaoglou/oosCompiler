@@ -40,7 +40,7 @@ class class_method:
         if str(field_name) not in list(self.fields.keys()):
             return False
         if expected_type is not None:
-            print(self.fields.get(str(field_name)))
+            
             return str(self.fields.get(str(field_name))) == str(expected_type)
         return True
     
