@@ -54,13 +54,20 @@ class Complex:
 class Main:
 
     Complex c1,c2,c3;
-    int x,y;
     ;
 
 
     def main(self): -
+
+        c1 = Complex(1,2);
+        c2 = Complex(3,4);
+        c3 = Complex();
+        c1.print_complex();
+        c2.print_complex();
+        c3.add(c1,c2);
+        c3.print_complex();
         c3.set_real(c1.squared_modulus());
-        x = c3.set_img(c1.print_complex(),y);
+        c3.set_img(c2.squared_modulus());
         c3.print_complex();
         ;
 

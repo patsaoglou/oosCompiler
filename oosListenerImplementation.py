@@ -23,7 +23,7 @@ class oosListenerImplementation(oosListener):
         self.expression_stack = []
         self.function_stack = []
 
-        self.function_obj_stack = {}
+        self.function_obj_stack = []
 
         self.current_expression = ""
         self.current_function = ""
@@ -376,14 +376,14 @@ class oosListenerImplementation(oosListener):
             id = str(ctx.ID())
             self.output.append(f"{self.tabbing()}")
             self.last_assignment_type = self.chech_if_id_declared(id)
-            self.function_obj_stack[id] = self.last_assignment_type # hold that in case it is a constructor call
+            self.function_obj_stack.append((id, self.last_assignment_type)) # hold that in case it is a constructor call
             self.output.append(f"{id} = ")
    
         
     def exitAssignment_stat(self, ctx:oosParser.Assignment_statContext):
         self.output.append(f";")
         self.last_assignment_type = None
-        self.function_obj_stack = {}
+        self.function_obj_stack = []
     # --------------------------------------------    
 
     def enterExpression(self, ctx:oosParser.ExpressionContext):
@@ -415,7 +415,7 @@ class oosListenerImplementation(oosListener):
 
             if (self.last_assignment_type != "int" and len(self.function_stack) == 0 and self.print_expression_list == None and self.in_relop == False):
                 
-                print(f"Assigning or returning '{ctx.getText()}', type int to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
+                print(f"Assigning or returning   '{ctx.getText()}', type int to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
                 exit(0)
             current_expr += f"{ctx.getText()}"
        
@@ -434,20 +434,26 @@ class oosListenerImplementation(oosListener):
             else:
                 current_expr += f"{field}"
 
-        elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == '.' and ctx.ID and ctx.func_call():
+        # id
+        elif ctx.getChildCount() == 1 and ctx.ID():
+            
+            id_type = self.chech_if_id_declared(ctx.ID(0).getText())
+            if len(self.function_stack) > 0 or id_type == self.last_assignment_type or self.print_expression_list != None or self.in_relop == True:
+                current_expr += f"{str(ctx.ID(0))}"
+            else:
+                print(f"Assigning or returning '{ctx.getText()}', type {id_type} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
+                exit(0)
+        
+        # id.function
+        elif ctx.getChildCount() >= 3 and ctx.getChild(1).getText() == '.' and ctx.ID and ctx.func_call():
             id = str(ctx.getChild(0).getText())
-            print(id)
-            self.last_assignment_type = self.chech_if_id_declared(id)
-            self.function_obj_stack[id] = self.last_assignment_type 
-
-            self.expression_stack.append(current_expr)
-            self.function_stack.append("") 
-
+            type = self.chech_if_id_declared(id)
+            self.function_obj_stack.append((id, type))
 
         # contructor call
         elif ctx.func_call():
-            self.expression_stack.append(current_expr)
-            self.function_stack.append("") 
+            print("constractor call")
+           
         
         # id.id
         elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == '.':
@@ -461,16 +467,6 @@ class oosListenerImplementation(oosListener):
                 else:
                     print(f"Assigning or returning '{field_id}', type {class_id} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
                     exit(0)
-        
-        # id
-        elif ctx.getChildCount() == 1 and ctx.ID():
-            
-            id_type = self.chech_if_id_declared(ctx.ID(0).getText())
-            if len(self.function_stack) > 0 or id_type == self.last_assignment_type or self.print_expression_list != None or self.in_relop == True:
-                current_expr += f"{str(ctx.ID(0))}"
-            else:
-                print(f"Assigning or returning '{ctx.getText()}', type {id_type} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
-                exit(0)
 
         if self.expression_stack:
             self.expression_stack[-1] = current_expr
@@ -483,8 +479,9 @@ class oosListenerImplementation(oosListener):
     
     def enterFunc_call(self, ctx:oosParser.Func_callContext):
         function_name = ctx.ID().getText()
-        if (self.function_obj_stack != {}):
-            id, type = self.function_obj_stack.popitem()
+        
+        if (self.function_obj_stack != []):
+            id, type = self.function_obj_stack.pop()
             if type == function_name:
                 self.function_stack.append(f"{function_name}({id}")
             else:
@@ -496,9 +493,8 @@ class oosListenerImplementation(oosListener):
     def exitFunc_call(self, ctx:oosParser.Func_callContext):
         function_call = self.function_stack.pop()
         
-        if self.expression_stack:
-            
-            function_call += self.expression_stack.pop() + ")"
+        function_call = function_call + ")"
+        
         if self.expression_stack:
             
             self.expression_stack[-1] += function_call
@@ -521,21 +517,21 @@ class oosListenerImplementation(oosListener):
 
     def exitArglist(self, ctx:oosParser.ArglistContext):
         if(ctx.argitem()):
+           
             completed_expression = self.expression_stack.pop()
             if self.expression_stack:
            
                 self.function_stack[-1] += completed_expression
-    
-
+               
     # --------------------------------------------    
 
     def enterDirect_call_stat(self, ctx:oosParser.Direct_call_statContext):
         if (ctx.ID):
             id = str(ctx.ID())
             self.output.append(f"{self.tabbing()}")
-            self.last_assignment_type = self.chech_if_id_declared(id)
-            self.function_obj_stack[id] = self.last_assignment_type 
-            self.expression_stack.append("") # that is to have an initial expression in the stack to get the final function call parameters 
+            type = self.chech_if_id_declared(id)
+            self.function_obj_stack.append((id, type))
+            # self.expression_stack.append("") # that is to have an initial expression in the stack to get the final function call parameters 
 
     def exitDirect_call_stat(self, ctx:oosParser.Direct_call_statContext):
         self.output.append(f"{self.current_expression};")
