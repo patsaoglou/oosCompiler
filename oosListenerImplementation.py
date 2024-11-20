@@ -452,7 +452,8 @@ class oosListenerImplementation(oosListener):
 
         # contructor call
         elif ctx.func_call():
-            print("constractor call")
+            pass
+            # print("constractor call")
            
         
         # id.id
@@ -494,7 +495,7 @@ class oosListenerImplementation(oosListener):
         function_call = self.function_stack.pop()
         
         function_call = function_call + ")"
-        
+        print(function_call)
         if self.expression_stack:
             
             self.expression_stack[-1] += function_call
@@ -517,10 +518,8 @@ class oosListenerImplementation(oosListener):
 
     def exitArglist(self, ctx:oosParser.ArglistContext):
         if(ctx.argitem()):
-           
-            completed_expression = self.expression_stack.pop()
             if self.expression_stack:
-           
+                completed_expression = self.expression_stack.pop()
                 self.function_stack[-1] += completed_expression
                
     # --------------------------------------------    
