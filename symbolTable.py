@@ -145,6 +145,24 @@ class class_info:
                 print(f"All parameters are the same type within overided methods '{method.get_method_with_version()}' and '{method_object.get_method_with_version()}'")
                 exit(0)
 
+    def search_method(self, method_name, param_num):
+        methods_with_name = self.methods.get(method_name)
+        if methods_with_name == None:
+            print(f"Method '{method_name}' is not declared in class '{self.name}'")
+            exit(0)
+
+        for method in methods_with_name:
+            
+            if method.param_number == param_num + 1:
+                if method.is_constructor:
+                    return str(method.version) + "$init"
+                return method.version
+        
+        print(f"Method '{method_name}' with parameter number '{param_num}' is not declared in class '{self.name}'")
+        exit(0)
+
+
+
     def __str__(self):
         inheritance_str = ', '.join([parent.name for parent in self.inherit_from])
         

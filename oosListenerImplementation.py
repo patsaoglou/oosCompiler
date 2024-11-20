@@ -43,6 +43,17 @@ class oosListenerImplementation(oosListener):
 
         self.tabs = 0
 
+        self.function_call_param_num = 0 
+        self.function_call_param_num_stack = []
+        self.function_class_stack = []
+
+    def search_actual_class_method(self, class_name, method_name, param_num):
+        class_obj = self.get_class_obj(class_name)
+        ver = class_obj.search_method(method_name, param_num)
+
+        return ver
+        
+
     def tabbing(self):
         return self.tabs * "\t"
 
@@ -232,7 +243,7 @@ class oosListenerImplementation(oosListener):
             method_name = self.add_method_to_class(constructor_class_name, constructor_class_name, True)
             
             self.last_method_def = method_name
-            self.output.append(f"\n{constructor_class_name}* init${self.last_method_obj.get_method_with_version()}({constructor_class_name} *self$")
+            self.output.append(f"\n{constructor_class_name}* {self.last_method_obj.get_method_with_version()}$init({constructor_class_name} *self$")
         
         self.indent()
 
@@ -480,22 +491,38 @@ class oosListenerImplementation(oosListener):
     
     def enterFunc_call(self, ctx:oosParser.Func_callContext):
         function_name = ctx.ID().getText()
+        if self.function_call_param_num > 0:
+            self.function_call_param_num_stack.append(self.function_call_param_num)
+            self.function_call_param_num = 0
         
         if (self.function_obj_stack != []):
             id, type = self.function_obj_stack.pop()
-            if type == function_name:
-                self.function_stack.append(f"{function_name}({id}")
-            else:
-                self.function_stack.append(f"{function_name}({id}")
-                # # serch if class with id has this method
-                # print(f"Invalid method call: {id, type} where it is {function_name}")
-                # exit(0)
+            
+            self.function_class_stack.append(type)
+            
+            
+            self.function_stack.append(f"{function_name}({id}")
 
     def exitFunc_call(self, ctx:oosParser.Func_callContext):
+        
         function_call = self.function_stack.pop()
+        class_name = self.function_class_stack.pop()
         
         function_call = function_call + ")"
-        print(function_call)
+        
+        parts = function_call.split('(', 1)
+
+        function_name = parts[0].strip()
+        arguments = parts[1].strip() 
+        
+        ver = self.search_actual_class_method(class_name, function_name, self.function_call_param_num)
+        
+        if len(self.function_call_param_num_stack):
+            self.function_call_param_num = self.function_call_param_num_stack.pop()
+        else:
+            self.function_call_param_num = 0       
+        
+        function_call = f"{function_name}${ver}({arguments}"
         if self.expression_stack:
             
             self.expression_stack[-1] += function_call
@@ -511,6 +538,7 @@ class oosListenerImplementation(oosListener):
     
     def enterArgitem(self, ctx:oosParser.ArgitemContext):
         if (ctx.expression()):
+            self.function_call_param_num += 1
             self.expression_stack[-1] +=", "
 
     def exitArgitem(self, ctx:oosParser.ArgitemContext):

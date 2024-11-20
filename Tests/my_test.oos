@@ -19,6 +19,14 @@ class Complex:
         return self;
         ;
 
+    def set_real(self, int real): -
+        self.real = real;
+        ;
+    
+    def set_img(self, int img): -
+        self.img = img;
+        ;
+
     def get_complex(self): Complex
         return self;
         ;
