@@ -16,7 +16,6 @@ Shape* Shape$1$init(Shape *self$, int x, int y)
 
 	self$ -> x = x;
 	self$ -> y = y;
-	return self$;
 
 }
 
@@ -30,7 +29,6 @@ Shape* Shape$2$init(Shape *self$, int x, int y, int color)
 	self$ -> x = x;
 	self$ -> y = y;
 	self$ -> color = color;
-	return self$;
 
 }
 
@@ -74,7 +72,6 @@ Circle* Circle$1$init(Circle *self$, int radius)
 	}
 
 	self$ -> radius = radius;
-	return self$;
 
 }
 
@@ -89,7 +86,6 @@ Circle* Circle$2$init(Circle *self$, int x, int y, int color, int radius)
 	self$ -> Shape$self.y = y;
 	self$ -> color = color;
 	self$ -> radius = radius;
-	return self$;
 
 }
 
@@ -121,7 +117,6 @@ Square* Square$1$init(Square *self$, int side)
 	}
 
 	self$ -> side = side;
-	return self$;
 
 }
 
@@ -131,7 +126,7 @@ int get_side$1(Square *self$)
 
 }
 
-int area$1(Square *self$)
+int area$2(Square *self$)
 {
 	return self$ -> side * self$ -> side;
 
@@ -152,14 +147,14 @@ SquareWithCirclesOnCorners* SquareWithCirclesOnCorners$1$init(SquareWithCirclesO
 
 	self$ -> Square$self.side = side;
 	self$ -> Circle$self.radius = radius;
-	return self$;
 
 }
 
-int area$1(SquareWithCirclesOnCorners *self$)
+int area$3(SquareWithCirclesOnCorners *self$)
 {
 	int int_pi;
 	int_pi = 3;
+	return get_side$1(&self$ -> Square$self) * get_side$1(&self$ -> Square$self) + 3 * int_pi * get_radius$1(&self$ -> Circle$self) * get_radius$1(&self$ -> Circle$self);
 
 }
 
@@ -178,11 +173,10 @@ SquareWithCirclesOnCorners2* SquareWithCirclesOnCorners2$1$init(SquareWithCircle
 
 	self$ -> s = Square$1$init(self$ -> s, side);
 	self$ -> c = Circle$1$init(self$ -> c, radius);
-	return self$;
 
 }
 
-int area$1(SquareWithCirclesOnCorners2 *self$)
+int area$4(SquareWithCirclesOnCorners2 *self$)
 {
 	int int_pi_part;
 	int_pi_part = 3;
@@ -198,11 +192,11 @@ int main(void)
 	c = Circle$1$init(c, 4);
 	printf("%d \n", area$1(c));
 	s = Square$1$init(s, 4);
-	printf("%d \n", area$1(s));
+	printf("%d \n", area$2(s));
 	s1 = SquareWithCirclesOnCorners$1$init(s1, 3, 5);
 	s2 = SquareWithCirclesOnCorners2$1$init(s2, 3, 5);
-	printf("%d \n", area$1(s1));
-	printf("%d \n", area$1(s2));
+	printf("%d \n", area$3(s1));
+	printf("%d \n", area$4(s2));
 
 
 	return 0;

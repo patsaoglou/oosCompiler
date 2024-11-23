@@ -8,6 +8,8 @@ class oosListenerImplementation(oosListener):
     def __init__(self):
         self.class_entries = {}
 
+        self.global_method_versions = {}
+
         self.output = []
         self.known_classes = []
         self.last_class_struct = None
@@ -48,9 +50,9 @@ class oosListenerImplementation(oosListener):
 
     def search_actual_class_method(self, class_name, method_name, param_num):
         class_obj = self.get_class_obj(class_name)
-        ver = class_obj.search_method(method_name, param_num)
+        ver_class = class_obj.search_method(method_name, param_num)
 
-        return ver
+        return ver_class
         
 
     def tabbing(self):
@@ -87,7 +89,7 @@ class oosListenerImplementation(oosListener):
 
     def add_method_to_class(self, class_name, method_name, is_constructor = False, return_type =None):
         class_obj = self.class_entries.get(class_name)
-        method = class_obj.add_method(method_name, is_constructor, return_type)
+        method = class_obj.add_method(method_name, is_constructor, return_type, self.global_method_versions)
         self.last_method_obj = method[1]
         return method[0]
 
@@ -383,10 +385,12 @@ class oosListenerImplementation(oosListener):
             self.output.append(f"self$")
         elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == "self.":
             id = ctx.ID().getText()
-            type = self.chech_if_id_declared(id, True)[0]
-            if (type != self.last_method_obj.get_return_type()):
+            type_class = self.chech_if_id_declared(id, True)
+            if (type_class[0] != self.last_method_obj.get_return_type()):
                 print(f"On '{self.last_method_obj.get_name()}' : returns '{self.last_method_obj.get_return_type()}', returning incompatible type '{type}'. Line {ctx.start.line}")
                 exit()
+            if type_class[1].name != self.known_classes[-1]:
+                id = f"{type_class[1].name}$self.{id}"
             self.output.append(f"self$ -> {id}")
 
 
@@ -446,8 +450,7 @@ class oosListenerImplementation(oosListener):
     def enterFactor(self, ctx:oosParser.FactorContext):
         
         current_expr = self.expression_stack[-1] if self.expression_stack else ""
-
-        
+       
         # Integer
         if ctx.INTEGER():
 
@@ -492,10 +495,19 @@ class oosListenerImplementation(oosListener):
             type = self.chech_if_id_declared(id)[0]
             self.function_obj_stack.append((id, type))
 
+        # self.functioncall
+        elif ctx.getChildCount() == 2 and ctx.func_call() and ctx.getChild(0).getText() == "self.":
+            self.function_obj_stack.append(("self", self.known_classes[-1]))
+
+        # self.id.function
+        elif ctx.getChildCount() >= 3 and ctx.getChild(1).getText() == "self." and ctx.getChild(3).getText() == "." and ctx.ID() and ctx.func_call():
+            id = str(ctx.getChild(0).getText())
+            type = self.chech_if_id_declared(id, True)[0]
+            self.function_obj_stack.append((id, type))
+
         # contructor call
-        elif ctx.func_call():
+        elif ctx.func_call() and ctx.getChildCount() == 1:
             pass
-            # print("constractor call")
            
         
         # id.id
@@ -546,20 +558,32 @@ class oosListenerImplementation(oosListener):
         class_name = self.function_class_stack.pop()
         
         function_call = function_call + ")"
-        
+        print(function_call)        
         parts = function_call.split('(', 1)
 
         function_name = parts[0].strip()
         arguments = parts[1].strip() 
         
+        rest_args = ""
+        
+        if ',' in arguments:
+            rest_args = ", "
+            rest_args  += arguments.split(',', 1)[1]
+        
+        rest_args += ")"        
+        
         ver = self.search_actual_class_method(class_name, function_name, self.function_call_param_num)
         
+        if ver[1] != None:
+            arguments = f"&self$ -> {ver[1].name}$self{rest_args}"
+        
+
         if len(self.function_call_param_num_stack):
             self.function_call_param_num = self.function_call_param_num_stack.pop()
         else:
             self.function_call_param_num = 0       
         
-        function_call = f"{function_name}${ver}({arguments}"
+        function_call = f"{function_name}${ver[0]}({arguments}"
         if self.expression_stack:
             
             self.expression_stack[-1] += function_call

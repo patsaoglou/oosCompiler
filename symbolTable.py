@@ -9,7 +9,7 @@ class class_method:
         self.param_number = 0
         self.return_type = None
 
-    def set_next_version(self, next):
+    def set_version(self, next):
         self.version = next
     
     def get_version(self):
@@ -84,7 +84,8 @@ class class_info:
             print("add_inheritance adding something that is not instance. Exit")
             exit(0)
     
-    def add_method(self, method_name, is_constructor = False, return_type = "void"):
+    def add_method(self, method_name, is_constructor = False, return_type = "void", global_method_versions = {}):
+      
         new_method = class_method(None)
         new_method.add_field("self",self.name, True)
         if is_constructor:
@@ -96,13 +97,19 @@ class class_info:
             new_method.set_name(method_name)
             new_method.set_return_type(return_type)
 
-        if method_name not in self.methods:
+        # print(self)
+        ver = global_method_versions.get(method_name)
+        if ver == None:
+           
             self.methods[method_name] = []
             self.methods[method_name].append(new_method)
+            global_method_versions[method_name] = 1
         else:
-            list_overided_methods = self.methods.get(method_name)
+            if self.methods.get(method_name) == None: #might be in global version but not inside the current class
+                self.methods[method_name] = []
             self.methods[method_name].append(new_method)
-            new_method.set_next_version(list_overided_methods[-1].get_version()+1)
+            new_method.set_version(ver+1)
+            global_method_versions[method_name] = ver + 1
 
         return [method_name, new_method]
     
@@ -154,20 +161,44 @@ class class_info:
                 exit(0)
 
     def search_method(self, method_name, param_num):
+        # print(f"{self.name}, {method_name}, {param_num}")
+        # input()
         methods_with_name = self.methods.get(method_name)
-        if methods_with_name == None:
-            print(f"Method '{method_name}' is not declared in class '{self.name}'")
-            exit(0)
-
-        for method in methods_with_name:
-            
-            if method.param_number == param_num + 1:
-                if method.is_constructor:
-                    return str(method.version) + "$init"
-                return method.version
         
-        print(f"Method '{method_name}' with parameter number '{param_num}' is not declared in class '{self.name}'")
-        exit(0)
+        inherited = None
+
+        if methods_with_name == None:
+            inherited = self.search_method_in_inherited_classes( method_name, param_num)
+
+            if (inherited == None):
+                print(f"Method '{method_name}' is not declared in class '{self.name}'")
+                exit(0)
+        if methods_with_name != None:
+            for method in methods_with_name:
+                
+                if method.param_number == param_num + 1:
+                    if method.is_constructor:
+                        return [str(method.version) + "$init", None]                
+                    return [method.version, None]
+        elif (inherited != None):
+            return inherited
+        else:
+            print(f"Method '{method_name}' with parameter number '{param_num}' is not declared in class '{self.name}'")
+            exit(0)
+    
+    def search_method_in_inherited_classes(self, method_name, param_num):
+        for inherited_class in self.inherits_from:
+            methods_of_class = inherited_class.methods.get(method_name)
+            
+            if methods_of_class != None:
+                for method in methods_of_class:
+                    if method.param_number == param_num + 1:
+                        return [method.version, inherited_class]
+        
+        return None
+
+                          
+
 
     def add_inheritage_class(self, class_object):
         self.inherits_from.append(class_object)
