@@ -72,14 +72,14 @@ class class_info:
 
     def __init__(self, name):
         self.name = name
-        self.inherit_from = [] # class_info list
+        self.inherits_from = [] # class_info list
         self.methods = {}
         self.constructor_number = 0
         self.fields = {}
     
     def add_inheritance(self, parent_class):    
         if isinstance(parent_class, class_info):
-            self.inherit_from.append(parent_class)
+            self.inherits_from.append(parent_class)
         else:
             print("add_inheritance adding something that is not instance. Exit")
             exit(0)
@@ -118,15 +118,23 @@ class class_info:
             exit(0)
         self.fields[field_name] = field_type
     
+    # returns [boolean, class_object, if class self same as class found]. used to know if i need to add self->x or self -> object.x on the final append 
     def has_field(self, field_name):
         field_type = self.fields.get(field_name)
+
         if (field_type):
-            return True
+            return [True, self, True]
         else:
-            return False
+            
+            class_object = self.search_field_in_inherited_classes(field_name)
+            if class_object:
+                
+                return [True, class_object, False] 
+            else:
+                return [False, None, False]
     
     def get_field_type(self, field_name):
-        if (self.has_field(field_name)):
+        if (self.has_field(field_name)[0]):
             return self.fields.get(field_name)
 
 
@@ -161,10 +169,22 @@ class class_info:
         print(f"Method '{method_name}' with parameter number '{param_num}' is not declared in class '{self.name}'")
         exit(0)
 
-
+    def add_inheritage_class(self, class_object):
+        self.inherits_from.append(class_object)
+    
+    def search_field_in_inherited_classes(self, field_name):
+        
+        # returns class object of the inherited class that has the field declared or none 
+        # if not found. none used to know if field is not found either on current class or parent classes 
+        for inherited_class in self.inherits_from:
+            if inherited_class.has_field(field_name)[0]:
+                return inherited_class
+        
+        return None
+    
 
     def __str__(self):
-        inheritance_str = ', '.join([parent.name for parent in self.inherit_from])
+        inheritance_str = ', '.join([parent.name for parent in self.inherits_from])
         
         all_classes = [cls for classes_list in self.methods.values() for cls in classes_list]
         methods_str = '\n  '.join([str(method) for method in all_classes])

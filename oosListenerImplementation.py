@@ -103,10 +103,10 @@ class oosListenerImplementation(oosListener):
     def has_class_field(self, class_name, field_name):
         class_obj = self.get_class_obj(class_name)
         
-        print(class_obj)
         if (class_obj):
-            if (class_obj.has_field(field_name)):
-                return True
+            bool_class = class_obj.has_field(field_name)
+            if (bool_class[0]):
+                return bool_class
             else:
                 
                 print(f"Class '{class_name}' does not have field '{field_name}' declared")
@@ -118,17 +118,18 @@ class oosListenerImplementation(oosListener):
     def get_method_field_type(self, field_name):
         return self.last_method_obj.get_field_type(field_name)
 
-    
+    # returns type of the id and class object of the the declaration used to get .
     def chech_if_id_declared(self, id, is_self = False):
         if self.last_class_struct == "main" or is_self:
-            if self.has_class_field(self.last_class_struct, id) == True:
+            bool_class = self.has_class_field(self.last_class_struct, id)
+            if bool_class[0] == True:
                 
-                return self.get_class_field_type(self.last_class_struct, id)
+                return [self.get_class_field_type(bool_class[1].name, id), bool_class[1]]
             else:
                 print(f"Field with name '{id}': int not declared in scope of {self.last_method_obj.get_name()}")
                 exit(0)
         elif self.last_method_obj.has_field(id) == True:
-            return self.get_method_field_type(id)
+            return [self.get_method_field_type(id), None]
         else:
             print(f"Field with name '{id}': int not declared in scope of {self.last_method_obj.get_name()}")
             exit(0)
@@ -156,7 +157,6 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------
 
     def enterClass_def(self, ctx:oosParser.Class_defContext):
-
         class_name = ctx.class_name(0).ID().getText()
         self.last_class_struct = class_name
 
@@ -165,8 +165,22 @@ class oosListenerImplementation(oosListener):
         self.indent()
         self.known_classes.append(f"{self.last_class_struct}")
         self.output.append("\n")
+        new_class = self.add_class(class_name)
 
-        self.add_class(class_name)
+        if ctx.getChildCount() > 2 and ctx.getChild(2).getText() == "inherits":
+            for class_name in ctx.class_name()[1::]:
+                name = class_name.getText()
+                
+                
+                
+                if name in self.known_classes[:-1]:
+                    new_class.add_inheritage_class(self.get_class_obj(name))
+                    self.output.append(f"\t{name} {name}$self;\n")
+                else:
+                    print(f"Class '{name}' not declared to be inherited from class '{self.known_classes[-1]}'. Line {ctx.start.line}")
+                    exit(0)
+
+        
 
     def exitClass_def(self, ctx:oosParser.Class_defContext):
         self.last_method_def = None
@@ -369,7 +383,7 @@ class oosListenerImplementation(oosListener):
             self.output.append(f"self$")
         elif ctx.getChildCount() == 3 and ctx.getChild(1).getText() == "self.":
             id = ctx.ID().getText()
-            type = self.chech_if_id_declared(id, True)
+            type = self.chech_if_id_declared(id, True)[0]
             if (type != self.last_method_obj.get_return_type()):
                 print(f"On '{self.last_method_obj.get_name()}' : returns '{self.last_method_obj.get_return_type()}', returning incompatible type '{type}'. Line {ctx.start.line}")
                 exit()
@@ -378,7 +392,6 @@ class oosListenerImplementation(oosListener):
 
     def exitReturn_stat(self, ctx:oosParser.Return_statContext):
         self.output.append(f";")
-        # here i should check if the returns made are type of return type of the method and raise error
 
     # --------------------------------------------    
 
@@ -387,15 +400,20 @@ class oosListenerImplementation(oosListener):
             
             class_self, assign = ctx.getText().split('.',1)
             field, val = assign.split('=')
+            bool_class = self.has_class_field(self.known_classes[-1], field)
 
-            if (self.has_class_field(self.known_classes[-1], field)):
-                self.last_assignment_type = self.chech_if_id_declared(field, True)
+            if (bool_class[0]):
+                type_class = self.chech_if_id_declared(field, True)
+                self.last_assignment_type = type_class[0]
+                if type_class[1].name != self.known_classes[-1]:
+                    field = f"{type_class[1].name}$self.{field}"
+
                 self.function_obj_stack.append((f"self$ -> {field}", self.last_assignment_type))  # hold that just in case it is consturctor or call in the function
                 self.output.append(f"{self.tabbing()}self$ -> {field} = ")
         elif ctx.ID:
             id = str(ctx.ID())
             self.output.append(f"{self.tabbing()}")
-            self.last_assignment_type = self.chech_if_id_declared(id)
+            self.last_assignment_type = self.chech_if_id_declared(id)[0]
             self.function_obj_stack.append((id, self.last_assignment_type)) # hold that in case it is a constructor call
             self.output.append(f"{id} = ")
    
@@ -435,7 +453,7 @@ class oosListenerImplementation(oosListener):
 
             if (self.last_assignment_type != "int" and len(self.function_stack) == 0 and self.print_expression_list == None and self.in_relop == False):
                 
-                print(f"Assigning or returning   '{ctx.getText()}', type int to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
+                print(f"Assigning or returning '{ctx.getText()}', type int to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
                 exit(0)
             current_expr += f"{ctx.getText()}"
        
@@ -449,7 +467,11 @@ class oosListenerImplementation(oosListener):
             
             field = str(ctx.getChild(1).getText())
             
-            if (self.has_class_field(self.known_classes[-1], field) and self.last_class_struct != "main"):
+            if (self.has_class_field(self.known_classes[-1], field)[0] and self.last_class_struct != "main"):
+                tmp_class = self.has_class_field( self.known_classes[-1], field)[1]
+                    
+                if tmp_class.name != self.known_classes[-1]:
+                    field = f"{tmp_class.name}$self.{field}"
                 current_expr += f"self$ -> {field}"
             else:
                 current_expr += f"{field}"
@@ -457,17 +479,17 @@ class oosListenerImplementation(oosListener):
         # id
         elif ctx.getChildCount() == 1 and ctx.ID():
             
-            id_type = self.chech_if_id_declared(ctx.ID(0).getText())
+            id_type = self.chech_if_id_declared(ctx.ID(0).getText())[0]
             if len(self.function_stack) > 0 or id_type == self.last_assignment_type or self.print_expression_list != None or self.in_relop == True:
                 current_expr += f"{str(ctx.ID(0))}"
             else:
-                print(f"Assigning or returning '{ctx.getText()}', type {id_type} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
+                print(f"Assigning or returning '{ctx.getText()}', type '{id_type}' to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
                 exit(0)
         
         # id.function
         elif ctx.getChildCount() >= 3 and ctx.getChild(1).getText() == '.' and ctx.ID and ctx.func_call():
             id = str(ctx.getChild(0).getText())
-            type = self.chech_if_id_declared(id)
+            type = self.chech_if_id_declared(id)[0]
             self.function_obj_stack.append((id, type))
 
         # contructor call
@@ -481,12 +503,19 @@ class oosListenerImplementation(oosListener):
             class_id = ctx.getChild(0).getText() 
             field_id = ctx.getChild(2).getText() 
 
-            class_id_type = self.chech_if_id_declared(class_id)
-            if (self.has_class_field( class_id_type, field_id) or self.print_expression_list != None):
-                if len(self.function_stack) > 0 or self.get_class_field_type(class_id_type, field_id) == self.last_assignment_type or self.in_relop == True:
+            class_id_type = self.chech_if_id_declared(class_id)[0]
+            # has_class_field returns len = 3 array. 0 bool if field with id found
+            # idx 1 class object that field was found, idx 2 if the class that was found is same or parent class(inherited field ) 
+            if (self.has_class_field( class_id_type, field_id)[0] or self.print_expression_list != None):
+                tmp_class = self.has_class_field( class_id_type, field_id) 
+                if len(self.function_stack) > 0 or self.get_class_field_type(tmp_class[1].name, field_id) == self.last_assignment_type or self.in_relop == True:
+                    
+                    if tmp_class[1].name != self.known_classes[-1] and tmp_class[2] == False:
+                        field_id = f"{tmp_class[1].name}$self.{field_id}"
+                        input()
                     current_expr += f"{class_id} -> {field_id}"
                 else:
-                    print(f"Assigning or returning '{field_id}', type {class_id} to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
+                    print(f"Assigning or returning '{field_id}', type '{class_id}' to field type '{self.last_assignment_type}'. Line {ctx.start.line}")
                     exit(0)
 
         if self.expression_stack:
@@ -513,7 +542,6 @@ class oosListenerImplementation(oosListener):
             self.function_stack.append(f"{function_name}({id}")
 
     def exitFunc_call(self, ctx:oosParser.Func_callContext):
-        
         function_call = self.function_stack.pop()
         class_name = self.function_class_stack.pop()
         
@@ -565,7 +593,7 @@ class oosListenerImplementation(oosListener):
         if (ctx.ID):
             id = str(ctx.ID())
             self.output.append(f"{self.tabbing()}")
-            type = self.chech_if_id_declared(id)
+            type = self.chech_if_id_declared(id)[0]
             self.function_obj_stack.append((id, type))
             # self.expression_stack.append("") # that is to have an initial expression in the stack to get the final function call parameters 
 
@@ -600,12 +628,12 @@ class oosListenerImplementation(oosListener):
         #   in main 
         if ctx.getChildCount() == 2 and ctx.ID:
             id = ctx.ID().getText()
-            type = self.chech_if_id_declared(id)
+            type = self.chech_if_id_declared(id)[0]
             
         # in class input
         elif ctx.getChildCount() == 3 and ctx.ID:
             id = ctx.ID().getText()
-            type = self.chech_if_id_declared(id, True)
+            type = self.chech_if_id_declared(id, True)[0]
     
             if self.last_class_struct != "main":
                 id = "self$ -> " + id

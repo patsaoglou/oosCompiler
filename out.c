@@ -1,134 +1,208 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct Hello 
+typedef struct Shape 
 {
-	int hello;
-} Hello;
+	int x, y;
+	int color;
+} Shape;
 
-Hello* Hello$1$init(Hello *self$)
-{
-	if(self$ == NULL)
-	{
-		self$ = (Hello *)malloc(sizeof(Hello));
-	}
-
-	self$ -> hello = 0;
-	return self$;
-
-}
-
-void get_hello$1(Hello *self$)
-{
-	printf("%d \n", self$ -> hello);
-
-}
-
-typedef struct Complex 
-{
-	int real, img;
-	struct Hello *h;
-} Complex;
-
-Complex* Complex$1$init(Complex *self$)
+Shape* Shape$1$init(Shape *self$, int x, int y)
 {
 	if(self$ == NULL)
 	{
-		self$ = (Complex *)malloc(sizeof(Complex));
+		self$ = (Shape *)malloc(sizeof(Shape));
 	}
 
-	self$ -> h = Hello$1$init(self$ -> h);
-	self$ -> real = 0;
-	self$ -> img = 0;
+	self$ -> x = x;
+	self$ -> y = y;
 	return self$;
 
 }
 
-Complex* Complex$2$init(Complex *self$, int real, int img)
+Shape* Shape$2$init(Shape *self$, int x, int y, int color)
 {
 	if(self$ == NULL)
 	{
-		self$ = (Complex *)malloc(sizeof(Complex));
+		self$ = (Shape *)malloc(sizeof(Shape));
 	}
 
-	self$ -> real = real;
-	self$ -> img = img;
+	self$ -> x = x;
+	self$ -> y = y;
+	self$ -> color = color;
 	return self$;
 
 }
 
-void set_real$1(Complex *self$, int real)
+void move$1(Shape *self$, int dx, int dy)
 {
-	self$ -> real = real;
+	self$ -> x = self$ -> x + dx;
+	self$ -> y = self$ -> y + dy;
 
 }
 
-void set_img$1(Complex *self$, int img)
+void move$2(Shape *self$, int dx)
 {
-	self$ -> img = img;
+	self$ -> x = self$ -> x + dx;
 
 }
 
-Complex* get_complex$1(Complex *self$)
+void set_x$1(Shape *self$, int x)
 {
+	self$ -> x = x;
+
+}
+
+int get_x$1(Shape *self$)
+{
+	return self$ -> x;
+
+}
+
+typedef struct Circle 
+{
+	Shape Shape$self;
+	int radius;
+	int color;
+} Circle;
+
+Circle* Circle$1$init(Circle *self$, int radius)
+{
+	if(self$ == NULL)
+	{
+		self$ = (Circle *)malloc(sizeof(Circle));
+	}
+
+	self$ -> radius = radius;
 	return self$;
 
 }
 
-void set_complex$1(Complex *self$, int real, int img)
+Circle* Circle$2$init(Circle *self$, int x, int y, int color, int radius)
 {
-	self$ -> real = real;
-	self$ -> img = img;
+	if(self$ == NULL)
+	{
+		self$ = (Circle *)malloc(sizeof(Circle));
+	}
+
+	self$ -> Shape$self.x = x;
+	self$ -> Shape$self.y = y;
+	self$ -> color = color;
+	self$ -> radius = radius;
+	return self$;
 
 }
 
-int get_real$1(Complex *self$)
+int get_radius$1(Circle *self$)
 {
-	return self$ -> real;
+	return self$ -> radius;
 
 }
 
-int get_img$1(Complex *self$)
+int area$1(Circle *self$)
 {
-	return self$ -> img;
+	int int_pi;
+	int_pi = 3;
+	return int_pi * self$ -> radius * self$ -> radius;
 
 }
 
-int squared_modulus$1(Complex *self$)
+typedef struct Square 
 {
-	return self$ -> real * self$ -> real + self$ -> img * self$ -> img;
+	Shape Shape$self;
+	int side;
+} Square;
+
+Square* Square$1$init(Square *self$, int side)
+{
+	if(self$ == NULL)
+	{
+		self$ = (Square *)malloc(sizeof(Square));
+	}
+
+	self$ -> side = side;
+	return self$;
 
 }
 
-void add$1(Complex *self$, Complex *c1, Complex *c2)
+int get_side$1(Square *self$)
 {
-	self$ -> real = c1 -> real + c2 -> real;
-	self$ -> img = c1 -> img + c2 -> img;
+	return self$ -> side;
 
 }
 
-void print_complex$1(Complex *self$)
+int area$1(Square *self$)
 {
-	printf("%d %d \n", self$ -> real, self$ -> img);
+	return self$ -> side * self$ -> side;
+
+}
+
+typedef struct SquareWithCirclesOnCorners 
+{
+	Square Square$self;
+	Circle Circle$self;
+} SquareWithCirclesOnCorners;
+
+SquareWithCirclesOnCorners* SquareWithCirclesOnCorners$1$init(SquareWithCirclesOnCorners *self$, int side, int radius)
+{
+	if(self$ == NULL)
+	{
+		self$ = (SquareWithCirclesOnCorners *)malloc(sizeof(SquareWithCirclesOnCorners));
+	}
+
+	self$ -> Square$self.side = side;
+	self$ -> Circle$self.radius = radius;
+	return self$;
+
+}
+
+int area$1(SquareWithCirclesOnCorners *self$)
+{
+	int int_pi;
+	int_pi = 3;
+
+}
+
+typedef struct SquareWithCirclesOnCorners2 
+{
+	struct Square *s;
+	struct Circle *c;
+} SquareWithCirclesOnCorners2;
+
+SquareWithCirclesOnCorners2* SquareWithCirclesOnCorners2$1$init(SquareWithCirclesOnCorners2 *self$, int side, int radius)
+{
+	if(self$ == NULL)
+	{
+		self$ = (SquareWithCirclesOnCorners2 *)malloc(sizeof(SquareWithCirclesOnCorners2));
+	}
+
+	self$ -> s = Square$1$init(self$ -> s, side);
+	self$ -> c = Circle$1$init(self$ -> c, radius);
+	return self$;
+
+}
+
+int area$1(SquareWithCirclesOnCorners2 *self$)
+{
+	int int_pi_part;
+	int_pi_part = 3;
 
 }
 
 int main(void)
 {
-	struct Complex *c1 = NULL, *c2 = NULL, *c3 = NULL;
-	struct Hello *h = NULL;
-	h = Hello$1$init(h);
-	get_hello$1(h);
-	c1 = Complex$2$init(c1, 1, 2);
-	c2 = Complex$2$init(c2, 3, 4);
-	c3 = Complex$1$init(c3);
-	print_complex$1(c1);
-	print_complex$1(c2);
-	add$1(c3, c1, c2);
-	print_complex$1(c3);
-	set_real$1(c3, squared_modulus$1(c1));
-	set_img$1(c3, squared_modulus$1(c2));
-	print_complex$1(c3);
+	struct Circle *c = NULL;
+	struct Square *s = NULL;
+	struct SquareWithCirclesOnCorners *s1 = NULL;
+	struct SquareWithCirclesOnCorners2 *s2 = NULL;
+	c = Circle$1$init(c, 4);
+	printf("%d \n", area$1(c));
+	s = Square$1$init(s, 4);
+	printf("%d \n", area$1(s));
+	s1 = SquareWithCirclesOnCorners$1$init(s1, 3, 5);
+	s2 = SquareWithCirclesOnCorners2$1$init(s2, 3, 5);
+	printf("%d \n", area$1(s1));
+	printf("%d \n", area$1(s2));
 
 
 	return 0;
