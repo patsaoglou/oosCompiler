@@ -448,7 +448,7 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
     
     def enterFactor(self, ctx:oosParser.FactorContext):
-        
+    
         current_expr = self.expression_stack[-1] if self.expression_stack else ""
        
         # Integer
@@ -500,10 +500,11 @@ class oosListenerImplementation(oosListener):
             self.function_obj_stack.append(("self", self.known_classes[-1]))
 
         # self.id.function
-        elif ctx.getChildCount() >= 3 and ctx.getChild(1).getText() == "self." and ctx.getChild(3).getText() == "." and ctx.ID() and ctx.func_call():
-            id = str(ctx.getChild(0).getText())
+        elif ctx.getChildCount() == 4 and ctx.getChild(0).getText() == "self." and ctx.getChild(2).getText() == "." and ctx.ID() and ctx.func_call():
+            
+            id = str(ctx.getChild(1).getText())
             type = self.chech_if_id_declared(id, True)[0]
-            self.function_obj_stack.append((id, type))
+            self.function_obj_stack.append(("self$ ->" + id, type))
 
         # contructor call
         elif ctx.func_call() and ctx.getChildCount() == 1:
@@ -573,7 +574,7 @@ class oosListenerImplementation(oosListener):
         rest_args += ")"        
         
         ver = self.search_actual_class_method(class_name, function_name, self.function_call_param_num)
-        
+
         if ver[1] != None:
             arguments = f"&self$ -> {ver[1].name}$self{rest_args}"
         

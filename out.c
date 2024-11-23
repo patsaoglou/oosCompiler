@@ -180,6 +180,7 @@ int area$4(SquareWithCirclesOnCorners2 *self$)
 {
 	int int_pi_part;
 	int_pi_part = 3;
+	return get_side$1(self$ ->s) * get_side$1(self$ ->s) + 3 * int_pi_part * get_radius$1(self$ ->c) * get_radius$1(self$ ->c);
 
 }
 

@@ -115,6 +115,8 @@ class SquareWithCirclesOnCorners2:
         int int_pi_part;
         ;
         int_pi_part = 3;
+        return self.s.get_side()*self.s.get_side()+
+            3*int_pi_part*self.c.get_radius()*self.c.get_radius();
             ;
 
 ##############################################################

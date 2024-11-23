@@ -161,8 +161,7 @@ class class_info:
                 exit(0)
 
     def search_method(self, method_name, param_num):
-        # print(f"{self.name}, {method_name}, {param_num}")
-        # input()
+
         methods_with_name = self.methods.get(method_name)
         
         inherited = None
@@ -196,10 +195,7 @@ class class_info:
                         return [method.version, inherited_class]
         
         return None
-
-                          
-
-
+    
     def add_inheritage_class(self, class_object):
         self.inherits_from.append(class_object)
     
