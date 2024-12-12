@@ -1,0 +1,156 @@
+Class name: Shape
+Fields: [x: int, y: int, color: int]
+Inherits from: []
+Methods:
+	Method name: Shape
+	Fields: [self: Shape, x: int, y: int]
+	Parameter num: 3
+	Version: 1
+	Returns: Shape
+	Constructor: True
+  
+	Method name: Shape
+	Fields: [self: Shape, x: int, y: int, color: int]
+	Parameter num: 4
+	Version: 2
+	Returns: Shape
+	Constructor: True
+  
+	Method name: move
+	Fields: [self: Shape, dx: int, dy: int]
+	Parameter num: 3
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: move
+	Fields: [self: Shape, dx: int]
+	Parameter num: 2
+	Version: 2
+	Returns: void
+	Constructor: False
+  
+	Method name: set_x
+	Fields: [self: Shape, x: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: get_x
+	Fields: [self: Shape]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: Circle
+Fields: [radius: int, color: int]
+Inherits from: [Shape]
+Methods:
+	Method name: Circle
+	Fields: [self: Circle, radius: int]
+	Parameter num: 2
+	Version: 1
+	Returns: Circle
+	Constructor: True
+  
+	Method name: Circle
+	Fields: [self: Circle, x: int, y: int, color: int, radius: int]
+	Parameter num: 5
+	Version: 2
+	Returns: Circle
+	Constructor: True
+  
+	Method name: get_radius
+	Fields: [self: Circle]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+  
+	Method name: area
+	Fields: [self: Circle, int_pi: int]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: Square
+Fields: [side: int]
+Inherits from: [Shape]
+Methods:
+	Method name: Square
+	Fields: [self: Square, side: int]
+	Parameter num: 2
+	Version: 1
+	Returns: Square
+	Constructor: True
+  
+	Method name: get_side
+	Fields: [self: Square]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+  
+	Method name: area
+	Fields: [self: Square]
+	Parameter num: 1
+	Version: 2
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: SquareWithCirclesOnCorners
+Fields: []
+Inherits from: [Square, Circle]
+Methods:
+	Method name: SquareWithCirclesOnCorners
+	Fields: [self: SquareWithCirclesOnCorners, side: int, radius: int]
+	Parameter num: 3
+	Version: 1
+	Returns: SquareWithCirclesOnCorners
+	Constructor: True
+  
+	Method name: area
+	Fields: [self: SquareWithCirclesOnCorners, int_pi: int]
+	Parameter num: 1
+	Version: 3
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: SquareWithCirclesOnCorners2
+Fields: [s: Square, c: Circle]
+Inherits from: []
+Methods:
+	Method name: SquareWithCirclesOnCorners2
+	Fields: [self: SquareWithCirclesOnCorners2, side: int, radius: int]
+	Parameter num: 3
+	Version: 1
+	Returns: SquareWithCirclesOnCorners2
+	Constructor: True
+  
+	Method name: area
+	Fields: [self: SquareWithCirclesOnCorners2, int_pi_part: int]
+	Parameter num: 1
+	Version: 4
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: main
+Fields: [c: Circle, s: Square, s1: SquareWithCirclesOnCorners, s2: SquareWithCirclesOnCorners2]
+Inherits from: []
+Methods:
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+

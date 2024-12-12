@@ -1,0 +1,90 @@
+Class name: Complex
+Fields: [real: int, img: int]
+Inherits from: []
+Methods:
+	Method name: Complex
+	Fields: [self: Complex]
+	Parameter num: 1
+	Version: 1
+	Returns: Complex
+	Constructor: True
+  
+	Method name: Complex
+	Fields: [self: Complex, real: int, img: int]
+	Parameter num: 3
+	Version: 2
+	Returns: Complex
+	Constructor: True
+  
+	Method name: set_real
+	Fields: [self: Complex, real: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: set_img
+	Fields: [self: Complex, img: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: get_complex
+	Fields: [self: Complex]
+	Parameter num: 1
+	Version: 1
+	Returns: Complex
+	Constructor: False
+  
+	Method name: set_complex
+	Fields: [self: Complex, real: int, img: int]
+	Parameter num: 3
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: get_real
+	Fields: [self: Complex]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+  
+	Method name: get_img
+	Fields: [self: Complex]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+  
+	Method name: squared_modulus
+	Fields: [self: Complex]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+  
+	Method name: add
+	Fields: [self: Complex, c1: Complex, c2: Complex]
+	Parameter num: 3
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: print_complex
+	Fields: [self: Complex]
+	Parameter num: 1
+	Version: 1
+	Returns: void
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: main
+Fields: [c1: Complex, c2: Complex, c3: Complex]
+Inherits from: []
+Methods:
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+

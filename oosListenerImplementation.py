@@ -141,13 +141,31 @@ class oosListenerImplementation(oosListener):
     
         class_obj.check_if_overide_methods_valid( method_object)        
 
+
+    #  get C sources and Symbolic table file
     def get_oos_compiled(self):
         compiled_content = "".join(self.output)
         
-        with open("out.c", "w") as file:
+        with open(f"out.c", "w") as file:
             file.write(compiled_content)
         
         return compiled_content
+    
+    def get_symb_structure(self):        
+        symb_str = ""
+        
+        for class_name, class_entry in self.class_entries.items():
+            symb_structure = class_entry.__str__()
+            print(symb_structure)
+
+            symb_str += symb_structure
+
+            symb_str += "\n\n" + 50*"+" + "\n\n" 
+
+        with open(f"out.sym", "w") as file:
+            file.write(symb_str)
+        
+        return symb_str
 
     # --------------------------------------------
 
@@ -559,7 +577,7 @@ class oosListenerImplementation(oosListener):
         class_name = self.function_class_stack.pop()
         
         function_call = function_call + ")"
-        print(function_call)        
+
         parts = function_call.split('(', 1)
 
         function_name = parts[0].strip()

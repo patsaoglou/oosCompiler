@@ -18,7 +18,9 @@ def oos_compile(oss_src_f):
     walker = ParseTreeWalker()
     walker.walk(oss_listener, tree)
 
-    print(oss_listener.get_oos_compiled())
+    source = oss_listener.get_oos_compiled()
+    oss_listener.get_symb_structure() 
+    print(source)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
