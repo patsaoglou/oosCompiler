@@ -1,0 +1,41 @@
+Class name: BankAccount
+Fields: [balance: int]
+Inherits from: []
+Methods:
+	Method name: BankAccount
+	Fields: [self: BankAccount]
+	Parameter num: 1
+	Version: 1
+	Returns: BankAccount
+	Constructor: True
+  
+	Method name: deposit
+	Fields: [self: BankAccount, amount: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: withdraw
+	Fields: [self: BankAccount, amount: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: get_balance
+	Fields: [self: BankAccount]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: main
+Fields: [acc1: BankAccount, deposit_amount: int, withdraw_amount: int, final_balance: int]
+Inherits from: []
+Methods:
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+

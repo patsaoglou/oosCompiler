@@ -1,0 +1,116 @@
+Class name: BankAccount
+Fields: [balance: int, account_number: int]
+Inherits from: []
+Methods:
+	Method name: BankAccount
+	Fields: [self: BankAccount, account_number: int]
+	Parameter num: 2
+	Version: 1
+	Returns: BankAccount
+	Constructor: True
+  
+	Method name: deposit
+	Fields: [self: BankAccount, amount: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: withdraw
+	Fields: [self: BankAccount, amount: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: get_balance
+	Fields: [self: BankAccount]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+  
+	Method name: get_account_number
+	Fields: [self: BankAccount]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: Customer
+Fields: [account: BankAccount, id: int]
+Inherits from: []
+Methods:
+	Method name: Customer
+	Fields: [self: Customer, id: int, account_number: int]
+	Parameter num: 3
+	Version: 1
+	Returns: Customer
+	Constructor: True
+  
+	Method name: get_customer_id
+	Fields: [self: Customer]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+  
+	Method name: deposit_to_account
+	Fields: [self: Customer, amount: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: withdraw_from_account
+	Fields: [self: Customer, amount: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: get_account_balance
+	Fields: [self: Customer]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: PremiumCustomer
+Fields: [cashback_percent: int]
+Inherits from: [Customer]
+Methods:
+	Method name: PremiumCustomer
+	Fields: [self: PremiumCustomer, id: int, account_number: int, cashback_percent: int]
+	Parameter num: 4
+	Version: 1
+	Returns: PremiumCustomer
+	Constructor: True
+  
+	Method name: withdraw_with_cashback
+	Fields: [self: PremiumCustomer, amount: int, cashback: int]
+	Parameter num: 2
+	Version: 1
+	Returns: void
+	Constructor: False
+  
+	Method name: get_cashback_percent
+	Fields: [self: PremiumCustomer]
+	Parameter num: 1
+	Version: 1
+	Returns: int
+	Constructor: False
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Class name: main
+Fields: [regular_customer: Customer, premium_customer: PremiumCustomer, deposit_amount: int, withdraw_amount: int, cashback_percent: int]
+Inherits from: []
+Methods:
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+

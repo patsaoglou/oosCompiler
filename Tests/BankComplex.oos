@@ -1,0 +1,123 @@
+##############################################################
+
+class BankAccount:
+    int balance;
+    int account_number;
+    ;
+
+    def __init__(self, int account_number): BankAccount
+        self.balance = 0;
+        self.account_number = account_number;
+        return self;
+        ;
+
+    def deposit(self, int amount): -
+        self.balance = self.balance + amount;
+        ;
+
+    def withdraw(self, int amount): -
+        if (self.balance >= amount):
+            self.balance = self.balance - amount;
+        else:
+            print 0; 
+        endif;
+        ;
+
+    def get_balance(self): int
+        return self.balance;
+        ;
+
+    def get_account_number(self): int
+        return self.account_number;
+        ;
+
+##############################################################
+
+class Customer:
+    BankAccount account;
+    int id;
+    ;
+
+    def __init__(self, int id, int account_number): Customer
+        self.id = id;
+        self.account = BankAccount(account_number);
+        return self;
+        ;
+
+    def get_customer_id(self): int
+        return self.id;
+        ;
+
+    def deposit_to_account(self, int amount): -
+        self.account.deposit(amount);
+        ;
+
+    def withdraw_from_account(self, int amount): -
+        self.account.withdraw(amount);
+        ;
+
+    def get_account_balance(self): int
+        return self.account.get_balance();
+        ;
+
+##############################################################
+
+class PremiumCustomer inherits Customer:
+    int cashback_percent;
+    ;
+
+    def __init__(self, int id, int account_number, int cashback_percent): PremiumCustomer
+        self.id = id;
+        self.account = BankAccount(account_number);
+        self.cashback_percent = cashback_percent;
+        return self;
+        ;
+
+    def withdraw_with_cashback(self, int amount): -
+        int cashback;
+        ;
+
+        self.account.withdraw(amount);
+        cashback = (amount * self.cashback_percent) / 100;
+        self.account.deposit(cashback);
+        ;
+
+    def get_cashback_percent(self): int
+        return self.cashback_percent;
+        ;
+
+##############################################################
+
+class Main:
+    Customer regular_customer;
+    PremiumCustomer premium_customer;
+    int deposit_amount, withdraw_amount, cashback_percent;
+    ;
+
+    def main(self): -
+        regular_customer = Customer(1, 101);
+        deposit_amount = 200;
+        withdraw_amount = 50;
+
+        regular_customer.deposit_to_account(deposit_amount);
+        print regular_customer.get_account_balance();
+
+        regular_customer.withdraw_from_account(withdraw_amount);
+        print regular_customer.get_account_balance();
+
+        regular_customer.withdraw_from_account(300); 
+
+        print regular_customer.get_customer_id();
+
+        
+        cashback_percent = 10;
+        premium_customer = PremiumCustomer(2, 102, cashback_percent);
+
+        premium_customer.deposit_to_account(500);
+        print premium_customer.get_account_balance();
+
+        premium_customer.withdraw_with_cashback(100); 
+        print premium_customer.get_account_balance();
+
+        print premium_customer.get_cashback_percent();
+        ;

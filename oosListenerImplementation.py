@@ -156,7 +156,6 @@ class oosListenerImplementation(oosListener):
         
         for class_name, class_entry in self.class_entries.items():
             symb_structure = class_entry.__str__()
-            print(symb_structure)
 
             symb_str += symb_structure
 
@@ -418,8 +417,7 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
 
     def enterAssignment_stat(self, ctx:oosParser.Assignment_statContext):     
-        if "self." in ctx.getText() and self.last_class_struct != "main":
-            
+        if "self." in ctx.getText().split('=')[0] and self.last_class_struct != "main":
             class_self, assign = ctx.getText().split('.',1)
             field, val = assign.split('=')
             bool_class = self.has_class_field(self.known_classes[-1], field)
@@ -512,17 +510,22 @@ class oosListenerImplementation(oosListener):
             id = str(ctx.getChild(0).getText())
             type = self.chech_if_id_declared(id)[0]
             self.function_obj_stack.append((id, type))
-
+            
         # self.functioncall
         elif ctx.getChildCount() == 2 and ctx.func_call() and ctx.getChild(0).getText() == "self.":
             self.function_obj_stack.append(("self", self.known_classes[-1]))
 
         # self.id.function
         elif ctx.getChildCount() == 4 and ctx.getChild(0).getText() == "self." and ctx.getChild(2).getText() == "." and ctx.ID() and ctx.func_call():
-            
             id = str(ctx.getChild(1).getText())
-            type = self.chech_if_id_declared(id, True)[0]
-            self.function_obj_stack.append(("self$ ->" + id, type))
+            bool_class = self.has_class_field(self.known_classes[-1], id)
+            type_class = self.chech_if_id_declared(id, True)
+            
+            if (bool_class[0]):    
+                if type_class[1].name != self.known_classes[-1]:
+                    id = f"{type_class[1].name}$self.{id}"
+                else:
+                    self.function_obj_stack.append((f"self$ -> {id}", type_class[0]))  # hold that just in case it is consturctor or call in the function
 
         # contructor call
         elif ctx.func_call() and ctx.getChildCount() == 1:
@@ -576,33 +579,33 @@ class oosListenerImplementation(oosListener):
         function_call = self.function_stack.pop()
         class_name = self.function_class_stack.pop()
         
-        function_call = function_call + ")"
-
         parts = function_call.split('(', 1)
 
         function_name = parts[0].strip()
         arguments = parts[1].strip() 
-        
         rest_args = ""
         
         if ',' in arguments:
             rest_args = ", "
             rest_args  += arguments.split(',', 1)[1]
         
-        rest_args += ")"        
+        object_param = arguments         
         
         ver = self.search_actual_class_method(class_name, function_name, self.function_call_param_num)
 
         if ver[1] != None:
-            arguments = f"&self$ -> {ver[1].name}$self{rest_args}"
-        
+            name = object_param.split(',')[0].split(')')[0]
+            name = name.strip()
+            if name == "self":
+                name += "$"
+            arguments = f"&{name} -> {ver[1].name}$self{rest_args}"
 
         if len(self.function_call_param_num_stack):
             self.function_call_param_num = self.function_call_param_num_stack.pop()
         else:
             self.function_call_param_num = 0       
         
-        function_call = f"{function_name}${ver[0]}({arguments}"
+        function_call = f"{function_name}${ver[0]}({arguments})"
         if self.expression_stack:
             
             self.expression_stack[-1] += function_call
@@ -633,12 +636,28 @@ class oosListenerImplementation(oosListener):
     # --------------------------------------------    
 
     def enterDirect_call_stat(self, ctx:oosParser.Direct_call_statContext):
-        if (ctx.ID):
+        # direct id.funtion
+        if (ctx.getChildCount() >= 3 and ctx.getChild(1).getText() == '.' and ctx.ID and ctx.func_call()):
             id = str(ctx.ID())
             self.output.append(f"{self.tabbing()}")
             type = self.chech_if_id_declared(id)[0]
             self.function_obj_stack.append((id, type))
-            # self.expression_stack.append("") # that is to have an initial expression in the stack to get the final function call parameters 
+        
+        # self.id.function
+        elif ctx.getChildCount() == 4 and ctx.getChild(0).getText() == "self." and ctx.getChild(2).getText() == "." and ctx.ID() and ctx.func_call():
+            
+            self.output.append(f"{self.tabbing()}")
+            id = str(ctx.getChild(1).getText())
+
+            bool_class = self.has_class_field(self.known_classes[-1], id)
+
+            if (bool_class[0]):
+                type_class = self.chech_if_id_declared(id, True)
+                self.last_assignment_type = type_class[0]
+                if type_class[1].name != self.known_classes[-1]:
+                    id = f"{type_class[1].name}$self.{id}"
+
+                self.function_obj_stack.append((f"self$ -> {id}", self.last_assignment_type))  # hold that just in case it is consturctor or call in the function
 
     def exitDirect_call_stat(self, ctx:oosParser.Direct_call_statContext):
         self.output.append(f"{self.current_expression};")

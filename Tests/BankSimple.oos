@@ -1,0 +1,55 @@
+##############################################################
+
+class BankAccount:
+    int balance;
+    ;
+
+    def __init__(self): BankAccount
+        self.balance = 0;
+        return self;
+        ;
+
+    def deposit(self, int amount): -
+        self.balance = self.balance + amount;
+        ;
+
+    def withdraw(self, int amount): -
+        if (self.balance >= amount):
+            self.balance = self.balance - amount;
+        else:
+            print 0;
+        endif;
+        ;
+
+    def get_balance(self): int
+        return self.balance;
+        ;
+
+##############################################################
+
+class Main:
+    BankAccount acc1;
+    int deposit_amount, withdraw_amount, final_balance;
+    ;
+
+    def main(self): -
+        acc1 = BankAccount();
+        deposit_amount = 100;
+        withdraw_amount = 30;
+
+        acc1.deposit(deposit_amount);
+        print acc1.get_balance();
+
+        acc1.withdraw(withdraw_amount);
+        print acc1.get_balance();
+
+        acc1.withdraw(200);
+
+        final_balance = acc1.get_balance();
+
+        if (final_balance > 0):
+            print final_balance;
+        else:
+            print 0;
+        endif;
+        ;
