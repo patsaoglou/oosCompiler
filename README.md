@@ -9,7 +9,7 @@ information into a symbol table structure and generate the final C code once inf
 
 ## How ANTLR works
 1. **Defining the Grammar:** begin by writing a grammar file (*.g4) to define the structure and rules of your language. This includes both lexical rules (tokens) and parser rules.
-2.** Generating Lexer and Parser:** Use ANTLR to generate the source code for the lexer, parser, and optional tree traversal classes (listeners or visitors) in the programming language of your choice.
+2. ** Generating Lexer and Parser:** Use ANTLR to generate the source code for the lexer, parser, and optional tree traversal classes (listeners or visitors) in the programming language of your choice.
 3. **Parsing Input:** provide the input to the generated parser. The lexer tokenizes the input, and the parser organizes the tokens into a parse tree according to the grammar rules.
 4. **Tree Traversal:** implement custom logic using the generated listener or visitor classes to traverse the parse tree. This step allows you to process the input meaningfully, such as evaluating expressions or transforming code.
 5. **Producing the Output:** based on the traversal, generate the final output, which can be a computed result, transformed data, or any custom representation.
