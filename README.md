@@ -1,24 +1,27 @@
 # OOS Compiler Project
 In this repository, I share a compiler project I've made under the Compilers 2 course (Prof. George Manis). This repository demonstrates the workflow 
 of using ANTLR (Another Tool for Language Recognition) to define, parse, and process custom languages. The goal is to illustrate the end-to-end process 
-of working with ANTLR, from grammar creation to generating outputs based on parsed input. A initial grammar file what given to us and we had to implement the listeners 
+of working with ANTLR, from grammar creation to generating outputs based on parsed input. 
+A initial grammar file what given to us and we had to implement the listeners 
 that are called once a known grammar structure was recognised by the ANTLR generated lexer and parser. The structure was then used by using the recognised tokens to save the necessary 
 information into a symbol table structure and generate the final C code once information was enough. 
 
 # How ANTLR works
-1. Defining the Grammar: begin by writing a grammar file (*.g4) to define the structure and rules of your language. This includes both lexical rules (tokens) and parser rules.
-2. Generating Lexer and Parser: Use ANTLR to generate the source code for the lexer, parser, and optional tree traversal classes (listeners or visitors) in the programming language of your choice.
-3. Parsing Input: provide the input to the generated parser. The lexer tokenizes the input, and the parser organizes the tokens into a parse tree according to the grammar rules.
-4. Tree Traversal: implement custom logic using the generated listener or visitor classes to traverse the parse tree. This step allows you to process the input meaningfully, such as evaluating expressions or transforming code.
-5. Producing the Output: based on the traversal, generate the final output, which can be a computed result, transformed data, or any custom representation.
+1. **Defining the Grammar:** begin by writing a grammar file (*.g4) to define the structure and rules of your language. This includes both lexical rules (tokens) and parser rules.
+2.** Generating Lexer and Parser:** Use ANTLR to generate the source code for the lexer, parser, and optional tree traversal classes (listeners or visitors) in the programming language of your choice.
+3. **Parsing Input:** provide the input to the generated parser. The lexer tokenizes the input, and the parser organizes the tokens into a parse tree according to the grammar rules.
+4. **Tree Traversal:** implement custom logic using the generated listener or visitor classes to traverse the parse tree. This step allows you to process the input meaningfully, such as evaluating expressions or transforming code.
+5. **Producing the Output:** based on the traversal, generate the final output, which can be a computed result, transformed data, or any custom representation.
 
 # High-Level OOS code logic
 OOS folows Python's Object Oriented approach where classes can be defined. Classes can encapsulate field of type 'int' or class objects. At least one constructor must also
-be implemented and called at the final code so the object is initialized by reserving the necessary heap space. Method can also be implemented within a class where the given class object 'self' must be passed to link the relation between the class and the method but also in order to be able to perform object manipulation. Method within a class can also be overloaded if parameter number is different. OOS supports inheritage where a class can inherit fields and methods from the parent class like they are defined within the class.
+be implemented and called at the final code so the object is initialized by reserving the necessary heap space. 
+Method can also be implemented within a class where the given class object 'self' must be passed to link the relation between the class and the method but also in order to be able to perform object manipulation. 
+Method within a class can also be overloaded if parameter number is different. OOS supports inheritage where a class can inherit fields and methods from the parent class like they are defined within the class.
 
 # OOS Grammar Structure - ANTLR
 ANTLR uses context-free grammar to define the structure of the language. A grammar in ANTLR is defined in the .g4 file, which consists of:
-1. Lexer Rules: defines how to tokenize the input string into meaningful pieces (tokens).
+1. **Lexer Rules:** defines how to tokenize the input string into meaningful pieces (tokens).
 
 ```g4
     WS: [ \t\r\n]+ -> skip;
@@ -26,7 +29,7 @@ ANTLR uses context-free grammar to define the structure of the language. A gramm
     ID: ID_START (ID_CONTINUE)*;
     INTEGER: NON_ZERO_DIGIT (DIGIT)* | '0'+;
 ```
-2. Parser Rules: defines how tokens are grouped into higher-level constructs (syntax trees).
+2. **Parser Rules:** defines how tokens are grouped into higher-level constructs (syntax trees).
 
 ```g4
     statement
@@ -47,9 +50,10 @@ ANTLR uses context-free grammar to define the structure of the language. A gramm
 
 # OOS Symbol Table Structure - ANTLR
 A symbol table structure had to be implemented to do the necessary checks if the code recognised by the parser was valid. The stucture had to save 
-information about the class field definitions, the classes of which it inherites from, the defined constructors and methods. The symbol table had to also
-keep track of the versions of the methods implemented so method overriding was possible. Lastly the symbol table was important for searching if a method or class 
-field seen by the parser was defined in a given class or by inherited classes the programmer specified in the declaration. The **def search_method_in_inherited_classes(self, method_name, param_num)** defined in the **symbolTable.py** for example was responsible to search for method not found in the class specified in the oos source code (self parameter) to be searched the inherited class structures saved in the **self.inherits_from = []** in the **class_info** class of the symbol table.
+information about the class field definitions, the classes of which it inherites from, the defined constructors and methods. 
+The symbol table had to also keep track of the versions of the methods implemented so method overriding was possible. Lastly the symbol table was important for searching if a method or class 
+field seen by the parser was defined in a given class or by inherited classes the programmer specified in the declaration. 
+The **def search_method_in_inherited_classes(self, method_name, param_num)** defined in the **symbolTable.py** for example was responsible to search for method not found in the class specified in the oos source code (self parameter) to be searched the inherited class structures saved in the **self.inherits_from = []** in the **class_info** class of the symbol table.
 
 The information structure saved by the symbol table can be summarized here:
 
