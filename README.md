@@ -2,6 +2,7 @@
 In this repository, I share a compiler project I've made under the Compilers 2 course (Prof. George Manis). This repository demonstrates the workflow 
 of using ANTLR (Another Tool for Language Recognition) to define, parse, and process custom languages. The goal is to illustrate the end-to-end process 
 of working with ANTLR, from grammar creation to generating outputs based on parsed input. 
+
 A initial grammar file what given to us and we had to implement the listeners 
 that are called once a known grammar structure was recognised by the ANTLR generated lexer and parser. The structure was then used by using the recognised tokens to save the necessary 
 information into a symbol table structure and generate the final C code once information was enough. 
@@ -16,7 +17,9 @@ information into a symbol table structure and generate the final C code once inf
 ## High-Level OOS code logic
 OOS folows Python's Object Oriented approach where classes can be defined. Classes can encapsulate field of type 'int' or class objects. At least one constructor must also
 be implemented and called at the final code so the object is initialized by reserving the necessary heap space. 
+
 Method can also be implemented within a class where the given class object 'self' must be passed to link the relation between the class and the method but also in order to be able to perform object manipulation. 
+
 Method within a class can also be overloaded if parameter number is different. OOS supports inheritage where a class can inherit fields and methods from the parent class like they are defined within the class.
 
 ## OOS Grammar Structure - ANTLR
@@ -51,8 +54,10 @@ ANTLR uses context-free grammar to define the structure of the language. A gramm
 ## OOS Symbol Table Structure - ANTLR
 A symbol table structure had to be implemented to do the necessary checks if the code recognised by the parser was valid. The stucture had to save 
 information about the class field definitions, the classes of which it inherites from, the defined constructors and methods. 
+
 The symbol table had to also keep track of the versions of the methods implemented so method overriding was possible. Lastly the symbol table was important for searching if a method or class 
 field seen by the parser was defined in a given class or by inherited classes the programmer specified in the declaration. 
+
 The **def search_method_in_inherited_classes(self, method_name, param_num)** defined in the **symbolTable.py** for example was responsible to search for method not found in the class specified in the oos source code (self parameter) to be searched the inherited class structures saved in the **self.inherits_from = []** in the **class_info** class of the symbol table.
 
 The information structure saved by the symbol table can be summarized here:
