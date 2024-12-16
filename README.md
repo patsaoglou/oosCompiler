@@ -144,6 +144,8 @@ Square* Square$1$init(Square *self$, int side)
 	}
 
 	self$ -> side = side;
+
+	return self$;
 }
 ```
 
