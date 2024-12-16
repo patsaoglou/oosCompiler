@@ -1,9 +1,0 @@
-oos.interp
-oos.tokens
-oosLexer.interp
-oosLexer.py
-oosLexer.tokens
-oosListener.py
-oosParser.py
-.gitignore
-__pycache__
