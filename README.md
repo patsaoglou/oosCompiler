@@ -6,20 +6,20 @@ A initial grammar file what given to us and we had to implement the listeners
 that are called once a known grammar structure was recognised by the ANTLR generated lexer and parser. The structure was then used by using the recognised tokens to save the necessary 
 information into a symbol table structure and generate the final C code once information was enough. 
 
-# How ANTLR works
+## How ANTLR works
 1. **Defining the Grammar:** begin by writing a grammar file (*.g4) to define the structure and rules of your language. This includes both lexical rules (tokens) and parser rules.
 2.** Generating Lexer and Parser:** Use ANTLR to generate the source code for the lexer, parser, and optional tree traversal classes (listeners or visitors) in the programming language of your choice.
 3. **Parsing Input:** provide the input to the generated parser. The lexer tokenizes the input, and the parser organizes the tokens into a parse tree according to the grammar rules.
 4. **Tree Traversal:** implement custom logic using the generated listener or visitor classes to traverse the parse tree. This step allows you to process the input meaningfully, such as evaluating expressions or transforming code.
 5. **Producing the Output:** based on the traversal, generate the final output, which can be a computed result, transformed data, or any custom representation.
 
-# High-Level OOS code logic
+## High-Level OOS code logic
 OOS folows Python's Object Oriented approach where classes can be defined. Classes can encapsulate field of type 'int' or class objects. At least one constructor must also
 be implemented and called at the final code so the object is initialized by reserving the necessary heap space. 
 Method can also be implemented within a class where the given class object 'self' must be passed to link the relation between the class and the method but also in order to be able to perform object manipulation. 
 Method within a class can also be overloaded if parameter number is different. OOS supports inheritage where a class can inherit fields and methods from the parent class like they are defined within the class.
 
-# OOS Grammar Structure - ANTLR
+## OOS Grammar Structure - ANTLR
 ANTLR uses context-free grammar to define the structure of the language. A grammar in ANTLR is defined in the .g4 file, which consists of:
 1. **Lexer Rules:** defines how to tokenize the input string into meaningful pieces (tokens).
 
@@ -48,7 +48,7 @@ ANTLR uses context-free grammar to define the structure of the language. A gramm
         ;
 ```
 
-# OOS Symbol Table Structure - ANTLR
+## OOS Symbol Table Structure - ANTLR
 A symbol table structure had to be implemented to do the necessary checks if the code recognised by the parser was valid. The stucture had to save 
 information about the class field definitions, the classes of which it inherites from, the defined constructors and methods. 
 The symbol table had to also keep track of the versions of the methods implemented so method overriding was possible. Lastly the symbol table was important for searching if a method or class 
@@ -95,7 +95,7 @@ The information structure saved by the symbol table can be summarized here:
         Constructor: False
 ```
 
-# From OOS to C source
+## From OOS to C source
 The final conversion of a given OOS source file to the final C source follows the procedure bellow:
 - **Class fields** specified on the OOS source are saved in **typedef struct** of the class name.
 ```C
@@ -162,7 +162,7 @@ int area$3(SquareWithCirclesOnCorners *self$)
 }
 ```
 
-# Improvements and additions
+## Improvements and additions
 1. The code i've posted cannot support more depth = 1 inheritage since the grammar does not support it and also the search functions
 might not return the correct value at the end (compiler it might crash too :-).
 2. Since dynamic allocation is used, it is possible to implement automatic deallocation by implenting destructors under the hood that call 
